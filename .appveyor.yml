@@ -26,7 +26,7 @@ environment:
 stack:
   python 3.8
 install:
-  - ls .travis/
+  - ls ./.travis
 #  - tree -d -L 5 '/home/appveyor/'  > tree.txt
 #  - 7z --help
   - export GIT_VERSION=`git rev-parse --verify --short HEAD 2>/dev/null|| echo "???"`
