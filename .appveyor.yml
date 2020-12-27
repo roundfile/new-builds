@@ -34,6 +34,7 @@ install:
   - sed -i'' -e "s/__revision__ = '0'/__revision__ = '$GIT_VERSION'/" src/artisanlib/__init__.py
   - .travis/install-${ARTISAN_OS}.sh
 build_script:
+  - chmod 777 src/.build/*.sh
   - .travis/script-${ARTISAN_OS}.sh
   - ls '/home/appveyor/projects/artisan/src'
 #  - ls '/home/appveyor/virtualenv/python3.8/lib/python3.8/site-packages'
