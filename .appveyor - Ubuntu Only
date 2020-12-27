@@ -1,11 +1,11 @@
-version: '2.4.3.{build}'
+version: '2.4.4.{build}'
 
 # Do not build on tags (GitHub only)
 skip_tags: true
 clone_depth: 1
 
 image:
-  - Ubuntu1604
+  - Ubuntu2004  #previously 1604
 
 branches:
   only:
