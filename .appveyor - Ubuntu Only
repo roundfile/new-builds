@@ -1,0 +1,43 @@
+version: '2.4.3.{build}'
+
+# Do not build on tags (GitHub only)
+skip_tags: true
+clone_depth: 1
+
+image:
+  - Ubuntu1604
+
+branches:
+  only:
+    - master     
+        
+
+#environment:
+#  GITHUB_TOKEN:
+#    secure: 9UB76Z8mCWYt1u7Ci2fPVNiI3iK3LzTuIPhtNGBbxKP7YOPaUuq2yHxRjIfRPEAx
+#  UPLOADTOOL_BODY:
+#    "WARNING: pre-release builds may not work. Use at your own risk.”
+
+
+environment:
+  ARTISAN_OS: linux
+  python: 3.8 # NOTE: on update, update also the var PYTHON_PATH in src/build-linux.sh
+#  PYTHON: $HOME/venv3.8
+stack:
+  python 3.8
+install:
+#  - tree -d -L 5 '/home/appveyor/'  > tree.txt
+#  - 7z --help
+  - export GIT_VERSION=`git rev-parse --verify --short HEAD 2>/dev/null|| echo "???"`
+  - sed -i'' -e "s/__revision__ = '0'/__revision__ = '$GIT_VERSION'/" src/artisanlib/__init__.py
+  - .travis/install-${ARTISAN_OS}.sh
+build_script:
+  - .travis/script-${ARTISAN_OS}.sh
+  - ls '/home/appveyor/projects/artisan/src'
+#  - ls '/home/appveyor/virtualenv/python3.8/lib/python3.8/site-packages'
+  - pwd
+artifacts:
+#  - path: 'tree.txt'
+  - path: 'src/artisan-*.deb'
+  - path: 'src/artisan-*.rpm'
+
