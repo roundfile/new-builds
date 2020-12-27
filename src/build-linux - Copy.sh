@@ -5,9 +5,9 @@ set -ex
 export LD_LIBRARY_PATH=$LD_LIBTRARY_PATH:/usr/local/lib
 export PATH=$PATH:$HOME/.local/bin
 
-if [ ! -z $APPVEYOR ]; then
+if [ ! -z $TRAVIS ]; then
     # Travis environment
-    export PYTHON_PATH=/home/appveyor/venv3.8/lib/python3.8/site-packages
+    export PYTHON_PATH=/home/travis/virtualenv/python3.8/lib/python3.8/site-packages
     export QT_PATH=$PYTHON_PATH/PyQt5/Qt
 elif [ -d /usr/lib/python3/dist-packages/PyQt5 ]; then
     # ARM builds
@@ -118,7 +118,7 @@ rm -f dist/libX11.so.6 # https://github.com/gridsync/gridsync/issues/43
 rm -f dist/libstdc++.so.6 # https://github.com/gridsync/gridsync/issues/189
 # the following libs might not need to be removed
 rm -f dist/libgio-2.0.so.0
-rm -f dist/libz.so.1
+rm -f dist/libz.so.1 # removing this lib seems to break the build on some RPi Buster version
 rm -f dist/libglib-2.0.so.0 # removed for v1.6 and later
 
 rm -f libusb-1.0.so.0
