@@ -17,7 +17,7 @@ set -ex # reduced logging
 #brew upgrade python
 
 brew install python@3.8
-#brew link --force --overwrite python@3.8
+brew link --force --overwrite python@3.8
 
 hash -r
 which python3
