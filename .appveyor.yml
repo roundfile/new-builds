@@ -39,6 +39,7 @@ build_script:
 #   don't know why the shell files lost execution permission when shifting to the new-builds repo
   - chmod 777 src/*.sh
   - .travis/script-${ARTISAN_OS}.sh
+  - ls -l src/artisan*
   
 artifacts:
   - path: 'src/artisan-*.dmg'
