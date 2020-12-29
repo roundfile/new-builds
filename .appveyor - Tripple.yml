@@ -13,6 +13,8 @@ branches:
   only:
     - master     
         
+stack:
+  python 3.8
 
 #environment:
 #  GITHUB_TOKEN:
@@ -120,10 +122,7 @@ for:
 
   environment:
     ARTISAN_OS: linux
-  #  python: 3.8 # NOTE: on update, update also the var PYTHON_PATH in src/build-linux.sh
     PYTHON: $HOME/venv3.8
-  stack:
-    python 3.8
   install:
     - ls ./.travis
   #   don't know why the shell files lost execution permission when shifting to the new-builds repo
