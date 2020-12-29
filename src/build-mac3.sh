@@ -59,7 +59,4 @@ fi
 # distribution
 rm -rf build dist
 sleep .3 # sometimes it takes a little for dist to get really empty
-
-ls -l $PYTHON/bin/p*
-
 $PYTHON/bin/python$PYTHON_V setup-mac3.py py2app | egrep -v '^(creating|copying file|byte-compiling|locate)'
