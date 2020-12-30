@@ -5,7 +5,7 @@ skip_tags: true
 clone_depth: 1
 
 image:
-#  - Visual Studio 2019
+  - Visual Studio 2019
   - macos
   - Ubuntu2004
 
@@ -78,8 +78,8 @@ for:
     - cmd: copy ..\LICENSE LICENSE.txt
     - cmd: 7z a artisan-win-%ARTISAN_VERSION%.zip Setup*.exe LICENSE.txt README.txt
 
-#  artifacts:
-#    - path: 'src\artisan-*.zip'
+  artifacts:
+    - path: 'src\artisan-*.zip'
 
 #  deploy_script:
 #    - cmd: curl -L -O https://github.com/rpaulo/uploadtool/raw/master/upload.sh
@@ -111,8 +111,8 @@ for:
     - chmod 777 src/*.sh
     - .travis/script-${ARTISAN_OS}.sh
     
-#  artifacts:
-#    - path: 'src/artisan-*.dmg'
+  artifacts:
+    - path: 'src/artisan-*.dmg'
 
 -
   matrix:
@@ -141,7 +141,7 @@ for:
     - ls '/home/appveyor/projects/new-builds/src'
 #  - ls '/home/appveyor/virtualenv/python3.8/lib/python3.8/site-packages'
     - pwd
-#  artifacts:
-#  #  - path: 'tree.txt'
-#    - path: 'src/artisan-*.deb'
-#    - path: 'src/artisan-*.rpm'
+  artifacts:
+  #  - path: 'tree.txt'
+    - path: 'src/artisan-*.deb'
+    - path: 'src/artisan-*.rpm'
