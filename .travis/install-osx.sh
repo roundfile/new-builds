@@ -33,7 +33,7 @@ python3 --version
 #brew uninstall wget
 #brew install wget
 
-brew install pylupdate5
+
 #brew install p7zip
 
 python3 -m pip install --upgrade pip
