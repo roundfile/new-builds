@@ -5,7 +5,7 @@ skip_tags: true
 clone_depth: 1
 
 image:
-  - Ubuntu2004  #previously 1604
+  - Ubuntu1604
 
 branches:
   only:
