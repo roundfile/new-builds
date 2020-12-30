@@ -47,10 +47,12 @@ export DYLD_FRAMEWORK_PATH=$QT_PATH/lib
 
 # translations
 #$PYTHONBIN/pylupdate5 artisan.pro
+echo "************* 1 **************"
 /Users/appveyor/venv3.8.6/bin/pylupdate5 artisan.pro
 
 # there is no full Qt installation on Travis, thus don't run  lrelease
 if [ -z $APPVEYOR ]; then
+    echo "************* 2 **************"
     $QT_SRC_PATH/bin/lrelease -verbose artisan.pro || true
     for f in translations/qtbase_*.ts
     do
@@ -63,4 +65,5 @@ fi
 rm -rf build dist
 sleep .3 # sometimes it takes a little for dist to get really empty
 #$PYTHON/bin/python$PYTHON_V setup-mac3.py py2app | egrep -v '^(creating|copying file|byte-compiling|locate)'
+echo "************* 3 **************"
 /Users/appveyor/venv3.8.6/bin/python$PYTHON_V setup-mac3.py py2app | egrep -v '^(creating|copying file|byte-compiling|locate)'
