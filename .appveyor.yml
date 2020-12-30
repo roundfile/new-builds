@@ -45,5 +45,5 @@ build_script:
 artifacts:
 #  - path: 'tree.txt'
   - path: 'src/artisan-*.deb'
-  - path: 'src/artisan-*.rpm'
+#  - path: 'src/artisan-*.rpm'
 
