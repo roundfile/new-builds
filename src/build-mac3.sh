@@ -44,9 +44,6 @@ export PATH=$PYTHON/bin:$PYTHON/lib:$PATH
 export PATH=$QT_PATH/bin:$QT_PATH/lib:$PATH
 export DYLD_FRAMEWORK_PATH=$QT_PATH/lib
 
-
-find /usr/local/ pylupdate5
-find $HOME/ pylupdate5
 # translations
 $PYTHONBIN/pylupdate5 artisan.pro
 # there is no full Qt installation on Travis, thus don't run  lrelease
