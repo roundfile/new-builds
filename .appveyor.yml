@@ -5,14 +5,14 @@ skip_tags: true
 clone_depth: 1
 
 image:
-  - Ubuntu2004  #previously 1604
+  - Ubuntu1604  #previously 1604
 
 branches:
   only:
     - master     
 
 stack:
-  python 3.8
+  python 3.8.0
 
 #environment:
 #  GITHUB_TOKEN:
