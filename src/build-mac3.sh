@@ -8,7 +8,8 @@ set -e  # reduced logging
 if [ ! -z $APPVEYOR ]; then
     # Appveyor CI builds
     echo "NOTICE: Appveyor build"
-    export PYTHON=/usr/local
+#    export PYTHON=/usr/local
+    export PYTHON=/Users/appveyor/venv3.8.6
     export PYTHONBIN=$PYTHON/bin
     export PYTHONPATH=$PYTHON/lib/python3.8
     export PYTHON_V=3.8
@@ -46,9 +47,9 @@ export DYLD_FRAMEWORK_PATH=$QT_PATH/lib
 
 
 # translations
-#$PYTHONBIN/pylupdate5 artisan.pro
 echo "************* 1 **************"
-/Users/appveyor/venv3.8.6/bin/pylupdate5 artisan.pro
+$PYTHONBIN/pylupdate5 artisan.pro
+#/Users/appveyor/venv3.8.6/bin/pylupdate5 artisan.pro
 
 # there is no full Qt installation on Travis, thus don't run  lrelease
 if [ -z $APPVEYOR ]; then
@@ -64,6 +65,6 @@ fi
 # distribution
 rm -rf build dist
 sleep .3 # sometimes it takes a little for dist to get really empty
-#$PYTHON/bin/python$PYTHON_V setup-mac3.py py2app | egrep -v '^(creating|copying file|byte-compiling|locate)'
 echo "************* 3 **************"
-/Users/appveyor/venv3.8.6/bin/python$PYTHON_V setup-mac3.py py2app | egrep -v '^(creating|copying file|byte-compiling|locate)'
+$PYTHON/bin/python$PYTHON_V setup-mac3.py py2app | egrep -v '^(creating|copying file|byte-compiling|locate)'
+#/Users/appveyor/venv3.8.6/bin/python$PYTHON_V setup-mac3.py py2app | egrep -v '^(creating|copying file|byte-compiling|locate)'
