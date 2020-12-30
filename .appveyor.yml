@@ -12,7 +12,7 @@ branches:
     - master     
 
 stack:
-  python 3.8.0
+  python 3.8
 
 #environment:
 #  GITHUB_TOKEN:
