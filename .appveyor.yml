@@ -7,7 +7,7 @@ clone_depth: 1
 image:
 #  - Visual Studio 2019
 #  - macos
-  - Ubuntu1604
+  - Ubuntu2004
 
 branches:
   only:
@@ -117,7 +117,7 @@ for:
 -
   matrix:
     only:
-      - image: Ubuntu1604
+      - image: Ubuntu2004
 #    fast_finish: true
 
   environment:
