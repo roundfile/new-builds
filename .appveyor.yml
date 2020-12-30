@@ -6,7 +6,7 @@ clone_depth: 1
 
 image:
 #  - Visual Studio 2019
-#  - macos
+  - macos
   - Ubuntu2004
 
 branches:
@@ -111,8 +111,8 @@ for:
     - chmod 777 src/*.sh
     - .travis/script-${ARTISAN_OS}.sh
     
-  artifacts:
-    - path: 'src/artisan-*.dmg'
+#  artifacts:
+#    - path: 'src/artisan-*.dmg'
 
 -
   matrix:
