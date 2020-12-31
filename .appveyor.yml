@@ -36,10 +36,9 @@ for:
 
   install:
     - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
-  #  - echo %PATH%
     - "%PYTHON%\\python.exe -m pip install --upgrade pip"
     - "%PYTHON%\\python.exe -m pip install wheel"
-    - "%PYTHON%\\python.exe -m pip install .appveyor\\pyinstaller-4.1+f9eeaaf9c0-py3-none-any.whl"
+    - "%PYTHON%\\python.exe -m pip install .ci\\pyinstaller-4.1+f9eeaaf9c0-py3-none-any.whl"
   ## start: build the pyinstaller bootloader and install (using the default VS 2015)
   #  - curl -L -O https://github.com/pyinstaller/pyinstaller/releases/download/v%PYINSTALLER_VER%/PyInstaller-%PYINSTALLER_VER%.tar.gz
   #  - tar xzf PyInstaller-%PYINSTALLER_VER%.tar.gz
@@ -83,6 +82,8 @@ for:
 
 #  deploy_script:
 #    - cmd: curl -L -O https://github.com/rpaulo/uploadtool/raw/master/upload.sh
+#    - export UPLOADTOOL_BODY="WARNING pre-release builds may not work. Use at your own risk."
+#    - export UPLOADTOOL_ISPRERELEASE=true
 #    - cmd: bash upload.sh artisan-*.zip
 
 
@@ -103,16 +104,23 @@ for:
     - export GIT_VERSION=`git rev-parse --verify --short HEAD 2>/dev/null|| echo "???"`
     - sed -i'' -e "s/__revision__ = '0'/__revision__ = '$GIT_VERSION'/" src/artisanlib/__init__.py
 #   don't know why the shell files lost execution permission when shifting to the new-builds repo
-    - chmod 777 ./.appveyor/*.sh
-    - .appveyor/install-${ARTISAN_OS}.sh
+    - chmod 777 ./.ci/*.sh
+    - .ci/install-${ARTISAN_OS}.sh
 
   build_script:
 #   don't know why the shell files lost execution permission when shifting to the new-builds repo
     - chmod 777 src/*.sh
-    - .appveyor/script-${ARTISAN_OS}.sh
+    - .ci/script-${ARTISAN_OS}.sh
     
 #  artifacts:
 #    - path: 'src/artisan-*.dmg'
+
+#  deploy_script:
+#    - cd src
+#    - cmd: curl -L -O https://github.com/rpaulo/uploadtool/raw/master/upload.sh
+#    - export UPLOADTOOL_BODY="WARNING pre-release builds may not work. Use at your own risk."
+#    - export UPLOADTOOL_ISPRERELEASE=true
+#    - cmd: bash upload.sh artisan-*.dmg
 
 -
   matrix:
@@ -124,19 +132,19 @@ for:
     ARTISAN_OS: linux
     PYTHON: $HOME/venv3.8
   install:
- #   - ls ./.appveyor
+ #   - ls ./.ci
   #   don't know why the shell files lost execution permission when shifting to the new-builds repo
-    - chmod 777 ./.appveyor/*.sh
+    - chmod 777 ./.ci/*.sh
   #  - tree -d -L 5 '/home/appveyor/'  > tree.txt
   #  - 7z --help
     - export GIT_VERSION=`git rev-parse --verify --short HEAD 2>/dev/null|| echo "???"`
     - sed -i'' -e "s/__revision__ = '0'/__revision__ = '$GIT_VERSION'/" src/artisanlib/__init__.py
-    - .appveyor/install-${ARTISAN_OS}.sh
+    - .ci/install-${ARTISAN_OS}.sh
   build_script:
 #    - pwd
 #   don't know why the shell files lost execution permission when shifting to the new-builds repo
     - chmod 777 src/*.sh
-    - .appveyor/script-${ARTISAN_OS}.sh
+    - .ci/script-${ARTISAN_OS}.sh
 #   this is a repo specific path!! 
 #    - ls '/home/appveyor/projects/new-builds/src'
 #  - ls '/home/appveyor/virtualenv/python3.8/lib/python3.8/site-packages'
@@ -144,3 +152,11 @@ for:
 #  artifacts:
 #    - path: 'src/artisan-*.deb'
 #    - path: 'src/artisan-*.rpm'
+
+#  deploy_script:
+#    - cd src
+#    - cmd: curl -L -O https://github.com/rpaulo/uploadtool/raw/master/upload.sh
+#    - export UPLOADTOOL_BODY="WARNING pre-release builds may not work. Use at your own risk."
+#    - export UPLOADTOOL_ISPRERELEASE=true
+#    - cmd: bash upload.sh artisan-*.deb
+#    - cmd: bask upload.sh artisan-*.rpm

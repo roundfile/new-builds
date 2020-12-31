@@ -13,6 +13,6 @@ pip install --upgrade pip
 pip install -r src/requirements.txt
 pip install -r src/requirements-${ARTISAN_OS}.txt
 
-.appveyor/install-libusb.sh
-.appveyor/install-phidgets.sh
-.appveyor/install-snap7.sh
+.ci/install-libusb.sh
+.ci/install-phidgets.sh
+.ci/install-snap7.sh
