@@ -32,9 +32,12 @@ for:
   environment:
     PYTHON: "C:\\Python38-x64"
     PYTHON_VERSION: 3.8.x
-    ARTISAN_VERSION: "{version}"
+    ARTISAN_VERSION: {version}
 
   install:
+    - echo "***********************************"
+    - echo %ARTISAN_VERSION%
+    - echo "***********************************"
     - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
     - "%PYTHON%\\python.exe -m pip install --upgrade pip"
     - "%PYTHON%\\python.exe -m pip install wheel"
