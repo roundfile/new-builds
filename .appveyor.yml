@@ -44,6 +44,6 @@ build_script:
   - pwd
 artifacts:
 #  - path: 'tree.txt'
-#  - path: 'src/artisan-*.deb'
+  - path: 'src/artisan-*.deb'
 #  - path: 'src/artisan-*.rpm'
 
