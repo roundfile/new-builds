@@ -3,7 +3,7 @@
 set -ex # reduced logging
 #set -e # increased logging
 
-#.travis/slience.sh brew update # this seems to help to work around some homebrew issues; and fails on others
+#.appveyor/slience.sh brew update # this seems to help to work around some homebrew issues; and fails on others
 
 # Python 3.7.5 is installed by default
 # to update use either:
@@ -45,13 +45,13 @@ sudo -H python3 -m pip install --no-binary lxml lxml==4.6.2
 sudo -H python3 -m pip install -r src/requirements.txt
 # use a custom py2app v0.21 (Python3.8) with apptemplate main-x86_64 build for 
 # target 10.13 using MacOSX10.15.sdk build on macOS 10.15 to add dark-mode support to builds
-#sudo -H python3 -m pip install .travis/py2app-0.21-py38-none-any.whl
-sudo -H python3 -m pip install .travis/py2app-0.22-py2.py3-none-any.whl
+#sudo -H python3 -m pip install .appveyor/py2app-0.21-py38-none-any.whl
+sudo -H python3 -m pip install .appveyor/py2app-0.22-py2.py3-none-any.whl
 # replaced sudo -H python3 -m pip install -r src/requirements-${TRAVIS_OS_NAME}.txt
 sudo -H python3 -m pip install -r src/requirements-${ARTISAN_OS}.txt
 #sudo rm -rf /usr/local/lib/python3.7/site-packages/matplotlib/mpl-data/sample_data
 sudo rm -rf /usr/local/opt/python@3.8/lib/python3.8/site-packages/matplotlib/mpl-data/sample_data
 sudo rm -rf /usr/local/opt/python@3.8/Frameworks/Python.framework/Versions/3.8/lib/python3.8/site-packages/matplotlib/mpl-data/sample_data
 
-#.travis/install-phidgets.sh # now installed via pip
-.travis/install-snap7.sh
+#.appveyor/install-phidgets.sh # now installed via pip
+.appveyor/install-snap7.sh
