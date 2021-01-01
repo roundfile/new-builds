@@ -12,13 +12,13 @@ clone_depth: 1
 environment:
   matrix:
   - job_name: windows
-    image: Visual Studio 2019
+    appveyor_build_worker_image: Visual Studio 2019
   - job_name: macos
-    image: macos
+    appveyor_build_worker_image: macos
   - job_name: linux
-    image: Ubuntu1604
+    appveyor_build_worker_image: Ubuntu1604
   - job_name: rpi
-    image: Ubuntu1604
+    appveyor_build_worker_image: Ubuntu1604
 
 branches:
   only:
