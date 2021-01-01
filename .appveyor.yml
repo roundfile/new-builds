@@ -69,6 +69,7 @@ for:
 
   build_script:
     - cmd: cd src
+    - cmd: FOR /F "usebackq delims==" %a IN (`python -c "import artisanlib; print(artisanlib.__version__)"`) DO (set ARTISAN_VERSION=%~a)
     - ps: $GIT_VERSION=git rev-parse --verify --short HEAD
     - ps: gc artisanlib/__init__.py | %{ $_ -replace "__revision__ = '0'", "__revision__ = '$GIT_VERSION'" } | out-file newfile -encoding ascii
     - ps: move -force newfile artisanlib/__init__.py
@@ -76,7 +77,6 @@ for:
     - ps: move -force newfile setup-install3-pi.nsi
     - cmd: build-win3-pi.bat
     - cmd: copy ..\LICENSE LICENSE.txt
-    - cmd: FOR /F "usebackq delims==" %a IN (`python -c "import artisanlib; print(artisanlib.__version__)"`) DO (set ARTISAN_VERSION=%~a)
     - cmd: 7z a artisan-win-%ARTISAN_VERSION%.zip Setup*.exe LICENSE.txt README.txt
 
 #  artifacts:
