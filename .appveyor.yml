@@ -32,7 +32,6 @@ for:
   matrix:
     only:
       - image: Visual Studio 2019
-      - exclude:
         configuration: Debug
 
   environment:
