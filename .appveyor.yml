@@ -32,7 +32,8 @@ for:
   matrix:
     only:
       - image: Visual Studio 2019
-        configuration: Debug
+    exclude:
+      - configuration: Debug
 
   environment:
     PYTHON: "C:\\Python38-x64"
