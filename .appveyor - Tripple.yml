@@ -32,7 +32,8 @@ for:
   environment:
     PYTHON: "C:\\Python38-x64"
     PYTHON_VERSION: 3.8.x
-    ARTISAN_VERSION: 2.4.4
+#    ARTISAN_VERSION: 2.4.5
+    #ARTISAN_VERSION: ${APPVEYOR_BUILD_VERSION}
 
   install:
     - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
@@ -71,6 +72,7 @@ for:
     - ps: $GIT_VERSION=git rev-parse --verify --short HEAD
     - ps: gc artisanlib/__init__.py | %{ $_ -replace "__revision__ = '0'", "__revision__ = '$GIT_VERSION'" } | out-file newfile -encoding ascii
     - ps: move -force newfile artisanlib/__init__.py
+    - cmd: FOR /F "usebackq delims==" %%a IN (`python -c "import artisanlib; print(artisanlib.__version__)"`) DO (set ARTISAN_VERSION=%%~a)
     - ps: gc setup-install3-pi.nsi | %{ $_ -replace "!define PRODUCT_VERSION.*", "!define PRODUCT_VERSION ""$Env:ARTISAN_VERSION.0""" } | out-file newfile -encoding ascii -force
     - ps: move -force newfile setup-install3-pi.nsi
     - cmd: build-win3-pi.bat
@@ -103,12 +105,10 @@ for:
   install:
     - export GIT_VERSION=`git rev-parse --verify --short HEAD 2>/dev/null|| echo "???"`
     - sed -i'' -e "s/__revision__ = '0'/__revision__ = '$GIT_VERSION'/" src/artisanlib/__init__.py
-#   don't know why the shell files lost execution permission when shifting to the new-builds repo
     - chmod 777 ./.ci/*.sh
     - .ci/install-${ARTISAN_OS}.sh
 
   build_script:
-#   don't know why the shell files lost execution permission when shifting to the new-builds repo
     - chmod 777 src/*.sh
     - .ci/script-${ARTISAN_OS}.sh
     
@@ -132,23 +132,13 @@ for:
     ARTISAN_OS: linux
     PYTHON: $HOME/venv3.8
   install:
- #   - ls ./.ci
-  #   don't know why the shell files lost execution permission when shifting to the new-builds repo
     - chmod 777 ./.ci/*.sh
-  #  - tree -d -L 5 '/home/appveyor/'  > tree.txt
-  #  - 7z --help
     - export GIT_VERSION=`git rev-parse --verify --short HEAD 2>/dev/null|| echo "???"`
     - sed -i'' -e "s/__revision__ = '0'/__revision__ = '$GIT_VERSION'/" src/artisanlib/__init__.py
     - .ci/install-${ARTISAN_OS}.sh
   build_script:
-#    - pwd
-#   don't know why the shell files lost execution permission when shifting to the new-builds repo
     - chmod 777 src/*.sh
     - .ci/script-${ARTISAN_OS}.sh
-#   this is a repo specific path!! 
-#    - ls '/home/appveyor/projects/new-builds/src'
-#  - ls '/home/appveyor/virtualenv/python3.8/lib/python3.8/site-packages'
-    - pwd
 #  artifacts:
 #    - path: 'src/artisan-*.deb'
 #    - path: 'src/artisan-*.rpm'
