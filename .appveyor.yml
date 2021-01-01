@@ -12,6 +12,10 @@ image:
 branches:
   only:
     - master     
+
+configuration:
+  - Release
+  - Debug
         
 stack:
   python 3.8
@@ -28,6 +32,8 @@ for:
   matrix:
     only:
       - image: Visual Studio 2019
+    exclude:
+      - configuration: Debug
 
   environment:
     PYTHON: "C:\\Python38-x64"
@@ -69,9 +75,6 @@ for:
       - image: Ubuntu1604
 #    fast_finish: true
 
-  configuration:
-      Release
-      Debug
   environment:
     ARTISAN_OS: linux
     PYTHON: $HOME/venv3.8
