@@ -5,7 +5,7 @@ skip_tags: true
 clone_depth: 1
 
 only_commits:
-  message: /build/
+  message: /build ci/
 
 environment:
   matrix:
