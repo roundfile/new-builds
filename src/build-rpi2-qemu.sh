@@ -133,11 +133,11 @@ cat /dev/zero | ssh-keygen -q -N "" || true
 sudo cp $HOME/.ssh/id_rsa.pub $mountpoint/home/pi/.ssh/authorized_keys
 sudo mkdir $mountpoint/home/pi/artisan
 if [ -d src ]; then
-    sudo cp -R ../artisan/.travis $mountpoint/home/pi/artisan
+    sudo cp -R ../artisan/.ci $mountpoint/home/pi/artisan
     sudo cp -R ../artisan/src $mountpoint/home/pi/artisan
     sudo cp -R ../artisan/LICENSE $mountpoint/home/pi/artisan
 elif [ -f artisan.py ]; then
-    sudo cp -R ../../artisan/.travis $mountpoint/home/pi/artisan
+    sudo cp -R ../../artisan/.ci $mountpoint/home/pi/artisan
     sudo cp -R ../../artisan/src $mountpoint/home/pi/artisan
     sudo cp -R ../../artisan/LICENSE $mountpoint/home/pi/artisan
 fi
