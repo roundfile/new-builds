@@ -4,10 +4,8 @@ version: '2.4.5.{build}'
 skip_tags: true
 clone_depth: 1
 
-#image:
-#  - Visual Studio 2019
-#  - macos
-#  - Ubuntu1604
+only_commits:
+  message: /build/
 
 environment:
   matrix:
@@ -17,8 +15,8 @@ environment:
     appveyor_build_worker_image: macos
   - job_name: linux
     appveyor_build_worker_image: Ubuntu1604
-  - job_name: rpi
-    appveyor_build_worker_image: Ubuntu1604
+#  - job_name: rpi
+#    appveyor_build_worker_image: Ubuntu1604
 
 branches:
   only:
