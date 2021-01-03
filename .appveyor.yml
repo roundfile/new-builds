@@ -5,8 +5,8 @@ skip_tags: true
 clone_depth: 1
 
 # Build only commits with "build ci" in the message
-only_commits:
-  message: /build ci/
+#only_commits:
+#  message: /build ci/
 
 environment:
   matrix:
