@@ -80,6 +80,7 @@ for:
     - echo 'Windows Build.
     - cmd: cd src
     - ps: $GIT_VERSION=git rev-parse --verify --short HEAD
+    - echo $GIT_VERSION
     - ps: gc artisanlib/__init__.py | %{ $_ -replace "__revision__ = '0'", "__revision__ = '$GIT_VERSION'" } | out-file newfile -encoding ascii
     - ps: move -force newfile artisanlib/__init__.py
     - cmd: FOR /F "usebackq delims==" %%a IN (`python -c "import artisanlib; print(artisanlib.__version__)"`) DO (set ARTISAN_VERSION=%%~a)
@@ -92,9 +93,9 @@ for:
 #  artifacts:
 #    - path: 'src\artisan-*.zip'
 
-#  deploy_script:
-#    - cmd: curl -L -O https://github.com/rpaulo/uploadtool/raw/master/upload.sh
-#    - cmd: bash upload.sh artisan-*.zip
+  deploy_script:
+    - cmd: curl -L -O https://github.com/rpaulo/uploadtool/raw/master/upload.sh
+    - cmd: bash upload.sh artisan-*.zip
 
 
 -
@@ -126,12 +127,12 @@ for:
 #  artifacts:
 #    - path: 'src/artisan-*.dmg'
 
-#  deploy_script:
-#    - cd src
-#    - curl -L -O https://github.com/rpaulo/uploadtool/raw/master/upload.sh
-#    - export UPLOADTOOL_BODY="WARNING pre-release builds may not work. Use at your own risk."
-#    - export UPLOADTOOL_ISPRERELEASE=true
-#    - bash upload.sh artisan-*.dmg
+  deploy_script:
+    - cd src
+    - curl -L -O https://github.com/rpaulo/uploadtool/raw/master/upload.sh
+    - export UPLOADTOOL_BODY="WARNING pre-release builds may not work. Use at your own risk."
+    - export UPLOADTOOL_ISPRERELEASE=true
+    - bash upload.sh artisan-*.dmg
 
 -
   matrix:
@@ -159,13 +160,13 @@ for:
 #    - path: 'src/artisan-*.deb'
 #    - path: 'src/artisan-*.rpm'
 
-#  deploy_script:
-#    - cd src
-#    - curl -L -O https://github.com/rpaulo/uploadtool/raw/master/upload.sh
-#    - export UPLOADTOOL_BODY="WARNING pre-release builds may not work. Use at your own risk."
-#    - export UPLOADTOOL_ISPRERELEASE=true
-#    - bash upload.sh artisan-*.deb
-#    - bash upload.sh artisan-*.rpm
+  deploy_script:
+    - cd src
+    - curl -L -O https://github.com/rpaulo/uploadtool/raw/master/upload.sh
+    - export UPLOADTOOL_BODY="WARNING pre-release builds may not work. Use at your own risk."
+    - export UPLOADTOOL_ISPRERELEASE=true
+    - bash upload.sh artisan-*.deb
+    - bash upload.sh artisan-*.rpm
 
 -
   matrix:
