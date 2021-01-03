@@ -9,15 +9,20 @@ clone_depth: 1
 #  message: /build ci/
 
 environment:
+  GITHUB_TOKEN:
+     secure: 3B4WGUJ5HrQ0rasOgIG44TQuAao6pKyar0XNwXifR0W6KtT54DvUUJzYMdqi7+IM
+#    secure: 9UB76Z8mCWYt1u7Ci2fPVNiI3iK3LzTuIPhtNGBbxKP7YOPaUuq2yHxRjIfRPEAx
+
   matrix:
   - job_name: windows
     appveyor_build_worker_image: Visual Studio 2019
-  - job_name: macos
-    appveyor_build_worker_image: macos
-  - job_name: linux
-    appveyor_build_worker_image: Ubuntu1604
+#  - job_name: macos
+#    appveyor_build_worker_image: macos
+#  - job_name: linux
+#    appveyor_build_worker_image: Ubuntu1604
 #  - job_name: rpi
 #    appveyor_build_worker_image: Ubuntu1604
+
 
 branches:
   only:
@@ -25,13 +30,6 @@ branches:
         
 stack:
   python 3.8
-
-#environment:
-#  GITHUB_TOKEN:
-#    secure: 9UB76Z8mCWYt1u7Ci2fPVNiI3iK3LzTuIPhtNGBbxKP7YOPaUuq2yHxRjIfRPEAx
-#  UPLOADTOOL_BODY:
-#    "WARNING: pre-release builds may not work. Use at your own risk.”
-
 
 for:
 -
@@ -42,6 +40,8 @@ for:
   environment:
     PYTHON: "C:\\Python38-x64"
     PYTHON_VERSION: 3.8.x
+    UPLOADTOOL_BODY:
+      "WARNING: pre-release builds may not work. Use at your own risk."
 
   install:
     - echo 'Windows Install'
@@ -92,11 +92,9 @@ for:
 #  artifacts:
 #    - path: 'src\artisan-*.zip'
 
-#  deploy_script:
-#    - cmd: curl -L -O https://github.com/rpaulo/uploadtool/raw/master/upload.sh
-#    - export UPLOADTOOL_BODY="WARNING pre-release builds may not work. Use at your own risk."
-#    - export UPLOADTOOL_ISPRERELEASE=true
-#    - cmd: bash upload.sh artisan-*.zip
+  deploy_script:
+    - cmd: curl -L -O https://github.com/rpaulo/uploadtool/raw/master/upload.sh
+    - cmd: bash upload.sh artisan-*.zip
 
 
 -
