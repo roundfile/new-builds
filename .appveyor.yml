@@ -1,30 +1,26 @@
+# Generic build number, later set to commit by init
 version: '{build}'
  
 # Do not build on tags (GitHub only)
 skip_tags: true
 clone_depth: 1
 
-# Build only commits with "build ci" in the message
-#only_commits:
-#  message: /build ci/
-
 environment:
   GITHUB_TOKEN:
      secure: 3B4WGUJ5HrQ0rasOgIG44TQuAao6pKyar0XNwXifR0W6KtT54DvUUJzYMdqi7+IM
-#    secure: 9UB76Z8mCWYt1u7Ci2fPVNiI3iK3LzTuIPhtNGBbxKP7YOPaUuq2yHxRjIfRPEAx
 
   matrix:
   - job_name: windows
     appveyor_build_worker_image: Visual Studio 2019
-#  - job_name: macos
-#    appveyor_build_worker_image: macos
-#  - job_name: linux
-#    appveyor_build_worker_image: Ubuntu1604
+  - job_name: macos
+    appveyor_build_worker_image: macos
+  - job_name: linux
+    appveyor_build_worker_image: Ubuntu1604
 #  - job_name: rpi
 #    appveyor_build_worker_image: Ubuntu1604
 
 init:
-  # Set "build version number" to to the commit hash
+  # Set "build version number" shown in appveyor build status to the commit hash
   - ps: Update-AppveyorBuild -Version "$($env:APPVEYOR_REPO_COMMIT.substring(0,8))-$env:APPVEYOR_BUILD_NUMBER"
 
 branches:
@@ -141,7 +137,6 @@ for:
   matrix:
     only:
       - job_name: linux
-#    fast_finish: true
 
   environment:
     ARTISAN_OS: linux
@@ -196,9 +191,9 @@ for:
 #  artifacts:
 #    - path: 'src/artisan-*.deb'
 
-#  deploy_script:
-#    - cd src
-#    - curl -L -O https://github.com/rpaulo/uploadtool/raw/master/upload.sh
-#    - export UPLOADTOOL_BODY="WARNING pre-release builds may not work. Use at your own risk."
-#    - export UPLOADTOOL_ISPRERELEASE=true
-#    - bash upload.sh artisan-*.deb
+  deploy_script:
+    - cd src
+    - curl -L -O https://github.com/rpaulo/uploadtool/raw/master/upload.sh
+    - export UPLOADTOOL_BODY="WARNING pre-release builds may not work. Use at your own risk."
+    - export UPLOADTOOL_ISPRERELEASE=true
+    - bash upload.sh artisan-*.deb
