@@ -1,4 +1,4 @@
-version: '{build}'
+version: '0.0.0{build}'
  
 # Do not build on tags (GitHub only)
 skip_tags: true
@@ -23,6 +23,9 @@ environment:
 #  - job_name: rpi
 #    appveyor_build_worker_image: Ubuntu1604
 
+init:
+  # Set "build version number" to "short-commit-hash" or when tagged to "tag name" (Travis style)
+  - ps: Update-AppveyorBuild -Version "dev-$($env:APPVEYOR_REPO_COMMIT.substring(0,7))"
 
 branches:
   only:
