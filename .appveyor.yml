@@ -69,7 +69,7 @@ for:
     - curl -k -L -O https://netcologne.dl.sourceforge.net/project/libusb-win32/libusb-win32-releases/1.2.6.0/libusb-win32-bin-1.2.6.0.zip
     - 7z x libusb-win32-bin-1.2.6.0.zip
     - copy libusb-win32-bin-1.2.6.0\bin\amd64\libusb0.dll C:\Windows\SysWOW64
-  # Phidget Python lib no installed via pip
+  ## Phidget Python lib no installed via pip
   #  - curl -L -O https://www.phidgets.com/downloads/phidget22/libraries/any/Phidget22Python.zip
   #  - 7z x Phidget22Python.zip
   #  - cd Phidget22Python
@@ -114,25 +114,25 @@ for:
 
   install:
     - echo "MacOS Install"  
-#    - export GIT_VERSION=`git rev-parse --verify --short HEAD 2>/dev/null|| echo "???"`
-#    - sed -i'' -e "s/__revision__ = '0'/__revision__ = '$GIT_VERSION'/" src/artisanlib/__init__.py
-#    - chmod +x .ci/*.sh
-#    - .ci/install-${ARTISAN_OS}.sh
+    - export GIT_VERSION=`git rev-parse --verify --short HEAD 2>/dev/null|| echo "???"`
+    - sed -i'' -e "s/__revision__ = '0'/__revision__ = '$GIT_VERSION'/" src/artisanlib/__init__.py
+    - chmod +x .ci/*.sh
+    - .ci/install-${ARTISAN_OS}.sh
 
   build_script:
     - echo "MacOS Build"  
-#    - chmod +x src/*.sh
-#    - .ci/script-${ARTISAN_OS}.sh
+    - chmod +x src/*.sh
+    - .ci/script-${ARTISAN_OS}.sh
     
-##  artifacts:
-##    - path: 'src/artisan-*.dmg'
+#  artifacts:
+#    - path: 'src/artisan-*.dmg'
 
-#  deploy_script:
-#    - cd src
-#    - curl -L -O https://github.com/rpaulo/uploadtool/raw/master/upload.sh
-#    - export UPLOADTOOL_BODY="WARNING pre-release builds may not work. Use at your own risk."
-#    - export UPLOADTOOL_ISPRERELEASE=true
-#    - bash upload.sh artisan-*.dmg
+  deploy_script:
+    - cd src
+    - curl -L -O https://github.com/rpaulo/uploadtool/raw/master/upload.sh
+    - export UPLOADTOOL_BODY="WARNING pre-release builds may not work. Use at your own risk."
+    - export UPLOADTOOL_ISPRERELEASE=true
+    - bash upload.sh artisan-*.dmg
 
 -
   matrix:
@@ -146,27 +146,27 @@ for:
 
   install:
     - echo "Linux Install"  
-#    - chmod +x .ci/*.sh
-#    - export GIT_VERSION=`git rev-parse --verify --short HEAD 2>/dev/null|| echo "???"`
-#    - sed -i'' -e "s/__revision__ = '0'/__revision__ = '$GIT_VERSION'/" src/artisanlib/__init__.py
-#    - .ci/install-${ARTISAN_OS}.sh
+    - chmod +x .ci/*.sh
+    - export GIT_VERSION=`git rev-parse --verify --short HEAD 2>/dev/null|| echo "???"`
+    - sed -i'' -e "s/__revision__ = '0'/__revision__ = '$GIT_VERSION'/" src/artisanlib/__init__.py
+    - .ci/install-${ARTISAN_OS}.sh
 
   build_script:
     - echo "Linux Build"  
-#    - chmod +x src/*.sh
-#    - .ci/script-${ARTISAN_OS}.sh
+    - chmod +x src/*.sh
+    - .ci/script-${ARTISAN_OS}.sh
 
-##  artifacts:
-##    - path: 'src/artisan-*.deb'
-#    - path: 'src/artisan-*.rpm'
+#  artifacts:
+#    - path: 'src/artisan-*.deb'
+    - path: 'src/artisan-*.rpm'
 
-#  deploy_script:
-#    - cd src
-#    - curl -L -O https://github.com/rpaulo/uploadtool/raw/master/upload.sh
-#    - export UPLOADTOOL_BODY="WARNING pre-release builds may not work. Use at your own risk."
-#    - export UPLOADTOOL_ISPRERELEASE=true
-#    - bash upload.sh artisan-*.deb
-#    - bash upload.sh artisan-*.rpm
+  deploy_script:
+    - cd src
+    - curl -L -O https://github.com/rpaulo/uploadtool/raw/master/upload.sh
+    - export UPLOADTOOL_BODY="WARNING pre-release builds may not work. Use at your own risk."
+    - export UPLOADTOOL_ISPRERELEASE=true
+    - bash upload.sh artisan-*.deb
+    - bash upload.sh artisan-*.rpm
 
 -
   matrix:
