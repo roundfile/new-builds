@@ -156,7 +156,7 @@ for:
 
   build_script:
     - echo "Linux Build"  
-#    - chmod +x src/*.sh
+    - chmod +x src/*.sh
     - .ci/script-${ARTISAN_OS}.sh
 
 #  artifacts:
@@ -183,7 +183,7 @@ for:
 
   install:
     - echo "RPI Install"  
-    - chmod +x ./.ci/*.sh
+#    - chmod +x ./.ci/*.sh
     - export GIT_VERSION=`git rev-parse --verify --short HEAD 2>/dev/null|| echo "???"`
     - sed -i'' -e "s/__revision__ = '0'/__revision__ = '$GIT_VERSION'/" src/artisanlib/__init__.py
     - .ci/install-${ARTISAN_OS}.sh
