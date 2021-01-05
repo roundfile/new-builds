@@ -156,7 +156,7 @@ for:
 
   build_script:
     - echo "Linux Build"  
-    - chmod +x src/*.sh
+#    - chmod +x src/*.sh
     - .ci/script-${ARTISAN_OS}.sh
 
 #  artifacts:
