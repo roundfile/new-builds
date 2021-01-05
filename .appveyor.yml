@@ -18,10 +18,11 @@ environment:
 #    appveyor_build_worker_image: Ubuntu1604
   - job_name: rpi
     appveyor_build_worker_image: Ubuntu1604
-
-matrix:
-  allow_failures:
-    - job_name: macos
+    allow_failures: true
+    
+#matrix:
+#  allow_failures:
+#    - job_name: rpi
 
 init:
   # Set "build version number" shown in appveyor build status to the commit hash
