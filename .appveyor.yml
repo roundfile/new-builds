@@ -16,8 +16,12 @@ environment:
 #    appveyor_build_worker_image: macos
 #  - job_name: linux
 #    appveyor_build_worker_image: Ubuntu1604
-#  - job_name: rpi
-#    appveyor_build_worker_image: Ubuntu1604
+  - job_name: rpi
+    appveyor_build_worker_image: Ubuntu1604
+
+matrix:
+  allow_failures:
+    - job_name: macos
 
 init:
   # Set "build version number" shown in appveyor build status to the commit hash
@@ -39,7 +43,6 @@ for:
 
   environment:
     PYTHON: "C:\\Python38-x64"
-#    PYTHON_VERSION: 3.8.x
     UPLOADTOOL_BODY:
       "WARNING: pre-release builds may not work. Use at your own risk."
 
@@ -80,7 +83,6 @@ for:
     - echo 'Windows Build.
     - cmd: cd src
     - ps: $GIT_VERSION=git rev-parse --verify --short HEAD
-    - echo $GIT_VERSION
     - ps: gc artisanlib/__init__.py | %{ $_ -replace "__revision__ = '0'", "__revision__ = '$GIT_VERSION'" } | out-file newfile -encoding ascii
     - ps: move -force newfile artisanlib/__init__.py
     - cmd: FOR /F "usebackq delims==" %%a IN (`python -c "import artisanlib; print(artisanlib.__version__)"`) DO (set ARTISAN_VERSION=%%~a)
@@ -90,8 +92,8 @@ for:
     - cmd: copy ..\LICENSE LICENSE.txt
     - cmd: 7z a artisan-win-%ARTISAN_VERSION%.zip Setup*.exe LICENSE.txt README.txt
 
-  artifacts:
-    - path: 'src\artisan-*.zip'
+#  artifacts:
+#    - path: 'src\artisan-*.zip'
 
 #  deploy_script:
 #    - cmd: curl -L -O https://github.com/rpaulo/uploadtool/raw/master/upload.sh
@@ -127,12 +129,12 @@ for:
 #  artifacts:
 #    - path: 'src/artisan-*.dmg'
 
-  deploy_script:
-    - cd src
-    - curl -L -O https://github.com/rpaulo/uploadtool/raw/master/upload.sh
-    - export UPLOADTOOL_BODY="WARNING pre-release builds may not work. Use at your own risk."
-    - export UPLOADTOOL_ISPRERELEASE=true
-    - bash upload.sh artisan-*.dmg
+#  deploy_script:
+#    - cd src
+#    - curl -L -O https://github.com/rpaulo/uploadtool/raw/master/upload.sh
+#    - export UPLOADTOOL_BODY="WARNING pre-release builds may not work. Use at your own risk."
+#    - export UPLOADTOOL_ISPRERELEASE=true
+#    - bash upload.sh artisan-*.dmg
 
 -
   matrix:
@@ -160,13 +162,13 @@ for:
 #    - path: 'src/artisan-*.deb'
     - path: 'src/artisan-*.rpm'
 
-  deploy_script:
-    - cd src
-    - curl -L -O https://github.com/rpaulo/uploadtool/raw/master/upload.sh
-    - export UPLOADTOOL_BODY="WARNING pre-release builds may not work. Use at your own risk."
-    - export UPLOADTOOL_ISPRERELEASE=true
-    - bash upload.sh artisan-*.deb
-    - bash upload.sh artisan-*.rpm
+#  deploy_script:
+#    - cd src
+#    - curl -L -O https://github.com/rpaulo/uploadtool/raw/master/upload.sh
+#    - export UPLOADTOOL_BODY="WARNING pre-release builds may not work. Use at your own risk."
+#    - export UPLOADTOOL_ISPRERELEASE=true
+#    - bash upload.sh artisan-*.deb
+#    - bash upload.sh artisan-*.rpm
 
 -
   matrix:
@@ -193,9 +195,9 @@ for:
 #  artifacts:
 #    - path: 'src/artisan-*.deb'
 
-  deploy_script:
-    - cd src
-    - curl -L -O https://github.com/rpaulo/uploadtool/raw/master/upload.sh
-    - export UPLOADTOOL_BODY="WARNING pre-release builds may not work. Use at your own risk."
-    - export UPLOADTOOL_ISPRERELEASE=true
-    - bash upload.sh artisan-*.deb
+#  deploy_script:
+#    - cd src
+#    - curl -L -O https://github.com/rpaulo/uploadtool/raw/master/upload.sh
+#    - export UPLOADTOOL_BODY="WARNING pre-release builds may not work. Use at your own risk."
+#    - export UPLOADTOOL_ISPRERELEASE=true
+#    - bash upload.sh artisan-*.deb
