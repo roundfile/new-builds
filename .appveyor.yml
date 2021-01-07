@@ -48,7 +48,6 @@ for:
 
   install:
     - echo "Windows Install"
-    - cmd: .ci\force-error.sh
     - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
     - "%PYTHON%\\python.exe -m pip install --upgrade pip"
     - "%PYTHON%\\python.exe -m pip install wheel"
@@ -118,7 +117,6 @@ for:
   install:
     - echo "MacOS Install"
     - chmod +x .ci/*.sh
-    - .ci/force-error.sh
     - export GIT_VERSION=`git rev-parse --verify --short HEAD 2>/dev/null|| echo "???"`
     - sed -i'' -e "s/__revision__ = '0'/__revision__ = '$GIT_VERSION'/" src/artisanlib/__init__.py
     - .ci/install-${ARTISAN_OS}.sh
@@ -151,7 +149,6 @@ for:
   install:
     - echo "Linux Install"  
     - chmod +x .ci/*.sh
-    - .ci/force-error.sh
     - export GIT_VERSION=`git rev-parse --verify --short HEAD 2>/dev/null|| echo "???"`
     - sed -i'' -e "s/__revision__ = '0'/__revision__ = '$GIT_VERSION'/" src/artisanlib/__init__.py
     - .ci/install-${ARTISAN_OS}.sh
@@ -186,7 +183,6 @@ for:
   install:
     - echo "RPI Install"  
     - chmod +x ./.ci/*.sh
-    - .ci/force-error.sh
     - export GIT_VERSION=`git rev-parse --verify --short HEAD 2>/dev/null|| echo "???"`
     - sed -i'' -e "s/__revision__ = '0'/__revision__ = '$GIT_VERSION'/" src/artisanlib/__init__.py
     - .ci/install-${ARTISAN_OS}.sh
