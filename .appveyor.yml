@@ -48,7 +48,7 @@ for:
 
   install:
     - echo "Windows Install"
-    - cmd: .\force-error.sh
+    - cmd: .ci\force-error.sh
     - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
     - "%PYTHON%\\python.exe -m pip install --upgrade pip"
     - "%PYTHON%\\python.exe -m pip install wheel"
