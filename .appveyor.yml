@@ -117,7 +117,7 @@ for:
 
   install:
     - echo "MacOS Install"
-    - force-error.sh
+    - .ci/force-error.sh
     - export GIT_VERSION=`git rev-parse --verify --short HEAD 2>/dev/null|| echo "???"`
     - sed -i'' -e "s/__revision__ = '0'/__revision__ = '$GIT_VERSION'/" src/artisanlib/__init__.py
     - chmod +x .ci/*.sh
