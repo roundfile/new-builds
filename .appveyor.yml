@@ -1,6 +1,6 @@
 # Generic build number, later set to commit hash by init
 version: '{build}'
-  
+
 # Do not build on tags (GitHub only)
 skip_tags: true
 clone_depth: 1
@@ -48,7 +48,7 @@ for:
 
   install:
     - echo "Windows Install"
-    - cmd: .\force-error-win.bat
+    - cmd: .\force-error.bat
     - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
     - "%PYTHON%\\python.exe -m pip install --upgrade pip"
     - "%PYTHON%\\python.exe -m pip install wheel"
@@ -116,7 +116,8 @@ for:
     MACOSX_DEPLOYMENT_TARGET: 10.15
 
   install:
-    - echo "MacOS Install"  
+    - echo "MacOS Install"
+    - force-error.sh
     - export GIT_VERSION=`git rev-parse --verify --short HEAD 2>/dev/null|| echo "???"`
     - sed -i'' -e "s/__revision__ = '0'/__revision__ = '$GIT_VERSION'/" src/artisanlib/__init__.py
     - chmod +x .ci/*.sh
