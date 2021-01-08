@@ -160,7 +160,7 @@ for:
 
 #  artifacts:
 #    - path: 'src/artisan-*.deb'
-    - path: 'src/artisan-*.rpm'
+#    - path: 'src/artisan-*.rpm'
 
 #  deploy_script:
 #    - cd src
