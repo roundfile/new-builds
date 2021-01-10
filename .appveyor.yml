@@ -47,11 +47,11 @@ for:
       "WARNING: pre-release builds may not work. Use at your own risk."
 
   install:
-    - echo ${Env:APPVEYOR_ACCOUNT_NAME}
-    - echo ${Env:APPVEYOR_PROJECT_SLUG}
-    - echo ${Env:APPVEYOR_BUILD_ID}
-    - echo ${Env:APPVEYOR_JOB_ID}
-    - echo ${Env:APPVEYOR_JOB_NAME}   
+    - ps: Write-Host $Env:APPVEYOR_ACCOUNT_NAME
+    - ps: Write-Host $Env:APPVEYOR_PROJECT_SLUG
+    - ps: Write-Host $Env:APPVEYOR_BUILD_ID
+    - ps: Write-Host $Env:APPVEYOR_JOB_ID
+    - ps: Write-Host $Env:Env:APPVEYOR_JOB_NAME
         
     - echo "Windows Install"
     - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
