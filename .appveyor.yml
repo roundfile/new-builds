@@ -6,8 +6,7 @@ skip_tags: true
 clone_depth: 1
 
 environment:
-  GITHUB_TOKEN:
-     secure: 3B4WGUJ5HrQ0rasOgIG44TQuAao6pKyar0XNwXifR0W6KtT54DvUUJzYMdqi7+IM
+  inhibit_deploy: true  
 
   matrix:
   - job_name: windows
@@ -18,8 +17,10 @@ environment:
     appveyor_build_worker_image: Ubuntu1604
   - job_name: rpi
     appveyor_build_worker_image: Ubuntu1604
+
+  GITHUB_TOKEN:
+     secure: 3B4WGUJ5HrQ0rasOgIG44TQuAao6pKyar0XNwXifR0W6KtT54DvUUJzYMdqi7+IM
   
-  inhibit_deploy: true  
 matrix:
   allow_failures:
     - job_name: rpi
@@ -27,6 +28,7 @@ matrix:
 init:
   # Set "build version number" shown in appveyor build status to the commit hash
   - ps: Update-AppveyorBuild -Version "$($env:APPVEYOR_REPO_COMMIT.substring(0,7))"
+  - ps: if($Env:inhibit_deploy == 'true'){Write-Host "**** Deploy Inhibited ****"}
 
 branches:
   only:
@@ -48,15 +50,6 @@ for:
       "WARNING: pre-release builds may not work. Use at your own risk."
 
   install:
-    - ps: Write-Host $Env:APPVEYOR_ACCOUNT_NAME
-    - ps: Write-Host $Env:APPVEYOR_PROJECT_SLUG
-    - ps: Write-Host $Env:APPVEYOR_BUILD_ID
-    - ps: Write-Host $Env:APPVEYOR_JOB_ID
-    - ps: Write-Host $Env:Env:APPVEYOR_JOB_NAME
-    - cmd: bash test.sh
-    - ps: Write-Host $Env:APPVEYOR_PULL_REQUEST_NUMBER
-    - ps: Write-Host $Env:APPVEYOR_PULL_REQUEST_TITLE 
-        
     - echo "Windows Install"
     - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
     - "%PYTHON%\\python.exe -m pip install --upgrade pip"
