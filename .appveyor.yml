@@ -6,7 +6,7 @@ skip_tags: true
 clone_depth: 1
 
 environment:
-  inhibit_deploy: true  
+  inhibit_deploy: false  
 
   matrix:
   - job_name: windows
