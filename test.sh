@@ -11,6 +11,10 @@ if [ ! -z "$APPVEYOR" ]; then
     TRAVIS_COMMIT="$APPVEYOR_REPO_COMMIT"
     TRAVIS_JOB_ID="$APPVEYOR_JOB_ID"
     TRAVIS_BUILD_WEB_URL="${APPVEYOR_URL}/project/${APPVEYOR_ACCOUNT_NAME}/${APPVEYOR_PROJECT_SLUG}/build/job/${APPVEYOR_JOB_ID}"
+    if [ ! -z "$APPVEYOR_PULL_REQUEST_NUMBER" ] ; then
+      echo "Release uploading disabled for pull requests"
+      exit 0
+    fi
 fi
 
 echo "Web url"
