@@ -52,6 +52,7 @@ for:
     - ps: Write-Host $Env:APPVEYOR_BUILD_ID
     - ps: Write-Host $Env:APPVEYOR_JOB_ID
     - ps: Write-Host $Env:Env:APPVEYOR_JOB_NAME
+    - cmd: bash test.sh
         
     - echo "Windows Install"
     - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
