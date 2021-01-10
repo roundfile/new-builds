@@ -18,7 +18,8 @@ environment:
     appveyor_build_worker_image: Ubuntu1604
   - job_name: rpi
     appveyor_build_worker_image: Ubuntu1604
-    
+  
+  inhibit_deploy: true  
 matrix:
   allow_failures:
     - job_name: rpi
