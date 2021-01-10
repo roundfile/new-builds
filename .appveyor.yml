@@ -47,6 +47,12 @@ for:
       "WARNING: pre-release builds may not work. Use at your own risk."
 
   install:
+    - echo $Env:APPVEYOR_ACCOUNT_NAME
+    - echo $Env:APPVEYOR_PROJECT_SLUG
+    - echo $Env:APPVEYOR_BUILD_ID 
+    - echo $Env:APPVEYOR_JOB_ID  
+    - echo $Env:APPVEYOR_JOB_NAME   
+        
     - echo "Windows Install"
     - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
     - "%PYTHON%\\python.exe -m pip install --upgrade pip"
@@ -95,9 +101,9 @@ for:
 #  artifacts:
 #    - path: 'src\artisan-*.zip'
 
-#  deploy_script:
-#    - cmd: curl -L -O https://github.com/rpaulo/uploadtool/raw/master/upload.sh
-#    - cmd: bash upload.sh artisan-*.zip
+  deploy_script:
+    - cmd: curl -L -O https://github.com/rpaulo/uploadtool/raw/master/upload.sh
+    - cmd: bash upload.sh artisan-*.zip
 
 
 -
@@ -129,12 +135,12 @@ for:
 #  artifacts:
 #    - path: 'src/artisan-*.dmg'
 
-#  deploy_script:
-#    - cd src
-#    - curl -L -O https://github.com/rpaulo/uploadtool/raw/master/upload.sh
-#    - export UPLOADTOOL_BODY="WARNING pre-release builds may not work. Use at your own risk."
-#    - export UPLOADTOOL_ISPRERELEASE=true
-#    - bash upload.sh artisan-*.dmg
+  deploy_script:
+    - cd src
+    - curl -L -O https://github.com/rpaulo/uploadtool/raw/master/upload.sh
+    - export UPLOADTOOL_BODY="WARNING pre-release builds may not work. Use at your own risk."
+    - export UPLOADTOOL_ISPRERELEASE=true
+    - bash upload.sh artisan-*.dmg
 
 -
   matrix:
@@ -162,13 +168,13 @@ for:
 #    - path: 'src/artisan-*.deb'
 #    - path: 'src/artisan-*.rpm'
 
-#  deploy_script:
-#    - cd src
-#    - curl -L -O https://github.com/rpaulo/uploadtool/raw/master/upload.sh
-#    - export UPLOADTOOL_BODY="WARNING pre-release builds may not work. Use at your own risk."
-#    - export UPLOADTOOL_ISPRERELEASE=true
-#    - bash upload.sh artisan-*.deb
-#    - bash upload.sh artisan-*.rpm
+  deploy_script:
+    - cd src
+    - curl -L -O https://github.com/rpaulo/uploadtool/raw/master/upload.sh
+    - export UPLOADTOOL_BODY="WARNING pre-release builds may not work. Use at your own risk."
+    - export UPLOADTOOL_ISPRERELEASE=true
+    - bash upload.sh artisan-*.deb
+    - bash upload.sh artisan-*.rpm
 
 -
   matrix:
@@ -195,9 +201,9 @@ for:
 #  artifacts:
 #    - path: 'src/artisan-*.deb'
 
-#  deploy_script:
-#    - cd src
-#    - curl -L -O https://github.com/rpaulo/uploadtool/raw/master/upload.sh
-#    - export UPLOADTOOL_BODY="WARNING pre-release builds may not work. Use at your own risk."
-#    - export UPLOADTOOL_ISPRERELEASE=true
-#    - bash upload.sh artisan-*.deb
+  deploy_script:
+    - cd src
+    - curl -L -O https://github.com/rpaulo/uploadtool/raw/master/upload.sh
+    - export UPLOADTOOL_BODY="WARNING pre-release builds may not work. Use at your own risk."
+    - export UPLOADTOOL_ISPRERELEASE=true
+    - bash upload.sh artisan-*.deb
