@@ -13,8 +13,8 @@ if [ ! -z "$APPVEYOR" ]; then
     TRAVIS_BUILD_WEB_URL="${APPVEYOR_URL}/project/${APPVEYOR_ACCOUNT_NAME}/${APPVEYOR_PROJECT_SLUG}/build/job/${APPVEYOR_JOB_ID}"
     echo "inhibit_deploy"
     echo "$inhibit_deploy"
-    if [ $inhibit_deploy == 'true' ] ; then
-      echo "Release uploading disabled"
+    if [ $APPVEYOR_REPO_COMMIT_MESSAGE -match 'nodeploy' ] || [ $APPVEYOR_REPO_COMMIT_MESSAGE_EXTENDED -match 'nodeploy' ] ; then
+      echo "Release uploading disabled, commit message contains 'nodeploy'"
       exit 0
     fi
     if [ ! -z "$APPVEYOR_PULL_REQUEST_NUMBER" ] ; then
