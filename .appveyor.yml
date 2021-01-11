@@ -51,7 +51,8 @@ for:
 
   install:
     - echo "Windows Install"
-    - ps: Write-Host "$APPVEYOR_REPO_COMMIT_MESSAGE_EXTENDED"
+    - ps: Write-Host "$$env:APPVEYOR_REPO_COMMIT_MESSAGE"
+    - ps: Write-Host "$$env:APPVEYOR_REPO_COMMIT_MESSAGE_EXTENDED"
     - ps bash test.sh
     - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
     - "%PYTHON%\\python.exe -m pip install --upgrade pip"
