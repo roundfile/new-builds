@@ -6,8 +6,6 @@ skip_tags: true
 clone_depth: 1
 
 environment:
-  inhibit_deploy: false  
-
   matrix:
   - job_name: windows
     appveyor_build_worker_image: Visual Studio 2019
@@ -51,9 +49,11 @@ for:
 
   install:
     - echo "Windows Install"
+
     - ps: Write-Host "${env:APPVEYOR_REPO_COMMIT_MESSAGE}"
     - ps: Write-Host "$env:APPVEYOR_REPO_COMMIT_MESSAGE_EXTENDED"
     - ps: bash test.sh
+
     - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
     - "%PYTHON%\\python.exe -m pip install --upgrade pip"
     - "%PYTHON%\\python.exe -m pip install wheel"
