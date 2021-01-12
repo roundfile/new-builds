@@ -4,6 +4,7 @@ version: '{build}'
 # Do not build on tags (GitHub only)
 skip_tags: true
 clone_depth: 1
+artifacts: off
 
 environment:
   matrix:
@@ -98,12 +99,12 @@ for:
     - cmd: copy ..\LICENSE LICENSE.txt
     - cmd: 7z a artisan-win-%ARTISAN_VERSION%.zip Setup*.exe LICENSE.txt README.txt
 
-#  artifacts:
-#    - path: 'src\artisan-*.zip'
+  artifacts:
+    - path: 'src\artisan-*.zip'
 
-  deploy_script:
-    - cmd: curl -L -O https://github.com/rpaulo/uploadtool/raw/master/upload.sh
-    - cmd: bash upload.sh artisan-*.zip
+#  deploy_script:
+#    - cmd: curl -L -O https://github.com/rpaulo/uploadtool/raw/master/upload.sh
+#    - cmd: bash upload.sh artisan-*.zip
 
 
 -
