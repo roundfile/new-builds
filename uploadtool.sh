@@ -49,7 +49,9 @@ fi
 # the output of the CI/CD pipeline (marked as 'continuous') and also test
 # builds for other branches.
 # If this build was triggered by a tag, call the result a Release
+
 if [ ! -z "$UPLOADTOOL_SUFFIX" ] ; then
+  echo $UPLOADTOOL_SUFFIX
   if [ "$UPLOADTOOL_SUFFIX" = "$TRAVIS_TAG" ] ; then
     RELEASE_NAME="$TRAVIS_TAG"
     RELEASE_TITLE="Release build ($TRAVIS_TAG)"
@@ -64,6 +66,7 @@ if [ ! -z "$UPLOADTOOL_SUFFIX" ] ; then
     fi
 
   fi
+echo is_pre_release 
 else
   # ,, is a bash-ism to convert variable to lower case
   case $(tr '[:upper:]' '[:lower:]' <<< "$TRAVIS_TAG") in
