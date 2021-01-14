@@ -50,8 +50,10 @@ fi
 # builds for other branches.
 # If this build was triggered by a tag, call the result a Release
 
+echo "***** UPLOADTOOL_SUFFIX:  $UPLOADTOOL_SUFFIX"
+echo "***** TRAVIS_TAG: $TRAVIS_TAG"
 if [ ! -z "$UPLOADTOOL_SUFFIX" ] ; then
-  echo $UPLOADTOOL_SUFFIX
+  echo "***** 1 *****"
   if [ "$UPLOADTOOL_SUFFIX" = "$TRAVIS_TAG" ] ; then
     RELEASE_NAME="$TRAVIS_TAG"
     RELEASE_TITLE="Release build ($TRAVIS_TAG)"
@@ -64,9 +66,9 @@ if [ ! -z "$UPLOADTOOL_SUFFIX" ] ; then
     else
       is_prerelease="true"
     fi
-
   fi
 else
+  echo "***** 1 *****"
   # ,, is a bash-ism to convert variable to lower case
   case $(tr '[:upper:]' '[:lower:]' <<< "$TRAVIS_TAG") in
     "")
@@ -92,7 +94,9 @@ else
   esac
 fi
 
-echo "****** is_pre_release: $is_prerelease"
+echo "***** RELEASE_NAME: $RELEASE_NAME"
+echo "***** RELEASE_TITLE: $RELEASE_TITLE"
+echo "***** is_pre_release: $is_prerelease"
 is_prerelease="true"
 if [ "$ARTIFACTORY_BASE_URL" != "" ]; then
   echo "ARTIFACTORY_BASE_URL set, trying to upload to artifactory"
