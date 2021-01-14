@@ -93,7 +93,7 @@ else
 fi
 
 echo "****** is_pre_release: $is_prerelease"
-
+is_prerelease="true"
 if [ "$ARTIFACTORY_BASE_URL" != "" ]; then
   echo "ARTIFACTORY_BASE_URL set, trying to upload to artifactory"
 
