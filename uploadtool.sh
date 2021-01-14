@@ -55,10 +55,12 @@ echo "***** TRAVIS_TAG: $TRAVIS_TAG"
 if [ ! -z "$UPLOADTOOL_SUFFIX" ] ; then
   echo "***** 1 *****"
   if [ "$UPLOADTOOL_SUFFIX" = "$TRAVIS_TAG" ] ; then
+    echo "***** 1a *****"
     RELEASE_NAME="$TRAVIS_TAG"
     RELEASE_TITLE="Release build ($TRAVIS_TAG)"
     is_prerelease="false"
   else
+    echo "***** 1b *****"
     RELEASE_NAME="continuous-$UPLOADTOOL_SUFFIX"
     RELEASE_TITLE="Continuous build ($UPLOADTOOL_SUFFIX)"
     if [ -z "$UPLOADTOOL_ISPRERELEASE" ] ; then
@@ -68,10 +70,11 @@ if [ ! -z "$UPLOADTOOL_SUFFIX" ] ; then
     fi
   fi
 else
-  echo "***** 1 *****"
+  echo "***** 2 *****"
   # ,, is a bash-ism to convert variable to lower case
   case $(tr '[:upper:]' '[:lower:]' <<< "$TRAVIS_TAG") in
     "")
+      echo "***** 2a *****"
       # Do not use "latest" as it is reserved by GitHub
       RELEASE_NAME="continuous"
       RELEASE_TITLE="Continuous build"
@@ -82,11 +85,13 @@ else
       fi
       ;;
     *-alpha*|*-beta*|*-rc*)
+      echo "***** 2b *****"
       RELEASE_NAME="$TRAVIS_TAG"
       RELEASE_TITLE="Pre-release build ($TRAVIS_TAG)"
       is_prerelease="true"
       ;;
     *)
+      echo "***** 2c *****"
       RELEASE_NAME="$TRAVIS_TAG"
       RELEASE_TITLE="Release build ($TRAVIS_TAG)"
       is_prerelease="false"
@@ -98,6 +103,7 @@ echo "***** RELEASE_NAME: $RELEASE_NAME"
 echo "***** RELEASE_TITLE: $RELEASE_TITLE"
 echo "***** is_pre_release: $is_prerelease"
 is_prerelease="true"
+
 if [ "$ARTIFACTORY_BASE_URL" != "" ]; then
   echo "ARTIFACTORY_BASE_URL set, trying to upload to artifactory"
 
