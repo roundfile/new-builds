@@ -66,7 +66,6 @@ if [ ! -z "$UPLOADTOOL_SUFFIX" ] ; then
     fi
 
   fi
-echo is_pre_release 
 else
   # ,, is a bash-ism to convert variable to lower case
   case $(tr '[:upper:]' '[:lower:]' <<< "$TRAVIS_TAG") in
@@ -92,6 +91,8 @@ else
       ;;
   esac
 fi
+
+echo "****** is_pre_release: $is_prerelease"
 
 if [ "$ARTIFACTORY_BASE_URL" != "" ]; then
   echo "ARTIFACTORY_BASE_URL set, trying to upload to artifactory"
