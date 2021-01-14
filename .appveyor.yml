@@ -105,7 +105,7 @@ for:
 
   deploy_script:
 #    - cmd: curl -L -O https://github.com/roundfile/uploadtool/raw/master/upload.sh
-    - cmd: bash upload.sh artisan-*.zip
+    - cmd: bash uploadtool.sh artisan-*.zip
 
 
 -
