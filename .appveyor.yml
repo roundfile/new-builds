@@ -104,7 +104,7 @@ for:
 #    - path: 'src\artisan-*.zip'
 
   deploy_script:
-    - cmd: curl -L -O https://github.com/roundfile/uploadtool/raw/master/upload.sh
+#    - cmd: curl -L -O https://github.com/roundfile/uploadtool/raw/master/upload.sh
     - cmd: bash upload.sh artisan-*.zip
 
 
