@@ -70,6 +70,8 @@ ssh_control()
     cd artisan
     cd src
     ./build-linux.sh
+    echo exiting after build-linux
+    exit 1
     ./build-rpi2-deb.sh
 EOF
     ${SCP} script pi@localhost:
