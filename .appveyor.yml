@@ -1,6 +1,6 @@
 # Generic build number, later set to commit hash by init
 version: '{build}'
-
+ 
 # Include "nodeploy" in the commit message to prevent deployment to github
 
 # Do not build on tags (GitHub only)
