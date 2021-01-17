@@ -9,14 +9,14 @@ clone_depth: 1
 
 environment:
   matrix:
-#  - job_name: windows
-#    appveyor_build_worker_image: Visual Studio 2019
-#  - job_name: macos
-#    appveyor_build_worker_image: macos
-#  - job_name: linux
-#    appveyor_build_worker_image: Ubuntu1604
-  - job_name: rpi
+  - job_name: windows
+    appveyor_build_worker_image: Visual Studio 2019
+  - job_name: macos
+    appveyor_build_worker_image: macos
+  - job_name: linux
     appveyor_build_worker_image: Ubuntu1604
+#  - job_name: rpi
+#    appveyor_build_worker_image: Ubuntu1604
 
   GITHUB_TOKEN:
      secure: 3B4WGUJ5HrQ0rasOgIG44TQuAao6pKyar0XNwXifR0W6KtT54DvUUJzYMdqi7+IM
@@ -125,14 +125,14 @@ for:
 
   install:
     - echo "MacOS Install"
-    - chmod +x .ci/*.sh
+#    - chmod +x .ci/*.sh
     - export GIT_VERSION=`git rev-parse --verify --short HEAD 2>/dev/null|| echo "???"`
     - sed -i'' -e "s/__revision__ = '0'/__revision__ = '$GIT_VERSION'/" src/artisanlib/__init__.py
     - .ci/install-${ARTISAN_OS}.sh
 
   build_script:
     - echo "MacOS Build"  
-    - chmod +x src/*.sh
+#    - chmod +x src/*.sh
     - .ci/script-${ARTISAN_OS}.sh
     
 #  artifacts:
@@ -157,14 +157,14 @@ for:
 
   install:
     - echo "Linux Install"  
-    - chmod +x .ci/*.sh
+#    - chmod +x .ci/*.sh
     - export GIT_VERSION=`git rev-parse --verify --short HEAD 2>/dev/null|| echo "???"`
     - sed -i'' -e "s/__revision__ = '0'/__revision__ = '$GIT_VERSION'/" src/artisanlib/__init__.py
     - .ci/install-${ARTISAN_OS}.sh
 
   build_script:
     - echo "Linux Build"  
-    - chmod +x src/*.sh
+#    - chmod +x src/*.sh
     - .ci/script-${ARTISAN_OS}.sh
 
 #  artifacts:
@@ -191,14 +191,14 @@ for:
 
   install:
     - echo "RPI Install"  
-    - chmod +x ./.ci/*.sh
+#    - chmod +x ./.ci/*.sh
     - export GIT_VERSION=`git rev-parse --verify --short HEAD 2>/dev/null|| echo "???"`
     - sed -i'' -e "s/__revision__ = '0'/__revision__ = '$GIT_VERSION'/" src/artisanlib/__init__.py
     - .ci/install-${ARTISAN_OS}.sh
 
   build_script:
     - echo "RPI Build"  
-    - chmod +x src/*.sh
+#    - chmod +x src/*.sh
     - .ci/script-${ARTISAN_OS}.sh
 
 #  artifacts:

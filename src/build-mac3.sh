@@ -51,7 +51,9 @@ $PYTHONBIN/pylupdate5 artisan.pro
 #/Users/appveyor/venv3.8.6/bin/pylupdate5 artisan.pro
 
 # there is no full Qt installation on Travis, thus don't run  lrelease
-if [ -z $APPVEYOR ]; then
+#dave flip this conditional
+if [ ! -z $APPVEYOR ]; then
+#if [ -z $APPVEYOR ]; then
     echo "************* 2 **************"
     $QT_SRC_PATH/bin/lrelease -verbose artisan.pro || true
     for f in translations/qtbase_*.ts
