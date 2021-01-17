@@ -1,6 +1,6 @@
 # Generic build number, later set to commit hash by init
 version: '{build}'
- 
+
 # Include "nodeploy" in the commit message to prevent deployment to github
 
 # Do not build on tags (GitHub only)
@@ -125,14 +125,14 @@ for:
 
   install:
     - echo "MacOS Install"
-#    - chmod +x .ci/*.sh
+    - chmod +x .ci/*.sh
     - export GIT_VERSION=`git rev-parse --verify --short HEAD 2>/dev/null|| echo "???"`
     - sed -i'' -e "s/__revision__ = '0'/__revision__ = '$GIT_VERSION'/" src/artisanlib/__init__.py
     - .ci/install-${ARTISAN_OS}.sh
 
   build_script:
     - echo "MacOS Build"  
-#    - chmod +x src/*.sh
+    - chmod +x src/*.sh
     - .ci/script-${ARTISAN_OS}.sh
     
 #  artifacts:
@@ -157,14 +157,14 @@ for:
 
   install:
     - echo "Linux Install"  
-#    - chmod +x .ci/*.sh
+    - chmod +x .ci/*.sh
     - export GIT_VERSION=`git rev-parse --verify --short HEAD 2>/dev/null|| echo "???"`
     - sed -i'' -e "s/__revision__ = '0'/__revision__ = '$GIT_VERSION'/" src/artisanlib/__init__.py
     - .ci/install-${ARTISAN_OS}.sh
 
   build_script:
     - echo "Linux Build"  
-#    - chmod +x src/*.sh
+    - chmod +x src/*.sh
     - .ci/script-${ARTISAN_OS}.sh
 
 #  artifacts:
@@ -191,14 +191,14 @@ for:
 
   install:
     - echo "RPI Install"  
-#    - chmod +x ./.ci/*.sh
+    - chmod +x ./.ci/*.sh
     - export GIT_VERSION=`git rev-parse --verify --short HEAD 2>/dev/null|| echo "???"`
     - sed -i'' -e "s/__revision__ = '0'/__revision__ = '$GIT_VERSION'/" src/artisanlib/__init__.py
     - .ci/install-${ARTISAN_OS}.sh
 
   build_script:
     - echo "RPI Build"  
-#    - chmod +x src/*.sh
+    - chmod +x src/*.sh
     - .ci/script-${ARTISAN_OS}.sh
 
 #  artifacts:
