@@ -81,10 +81,10 @@ RequestExecutionLevel admin
   Delete "$TEMP\25b241e1.tmp"
   nsExec::Exec "cmd /c for /f $\"tokens=1,2$\" %i in ('tasklist') do (if /i %i EQU artisan.exe fsutil file createnew $TEMP\25b241e1.tmp 0)"
   IfFileExists $TEMP\25b241e1.tmp 0 notRunning
-   ;we have atleast one main window active
-   MessageBox MB_OK|MB_ICONEXCLAMATION "Artisan was found to be running. Please close all instances then try the installer again." /SD IDOK
-   Delete "$TEMP\25b241e1.tmp"
-   Quit
+    ;we have at least one main window active
+    MessageBox MB_OK|MB_ICONEXCLAMATION "Artisan was found to be running. Please close all instances then try the installer again." /SD IDOK
+    Delete "$TEMP\25b241e1.tmp"
+    Quit
   notRunning:
 !macroEnd
 
@@ -168,6 +168,7 @@ Function .onInit
  
 ;Run the uninstaller
 uninst:
+  !insertmacro IsRunning
   ClearErrors
   IfSilent mysilent nosilent
     
