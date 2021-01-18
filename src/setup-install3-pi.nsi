@@ -168,7 +168,6 @@ Function .onInit
  
 ;Run the uninstaller
 uninst:
-  !insertmacro IsRunning
   ClearErrors
   IfSilent mysilent nosilent
     
@@ -258,6 +257,7 @@ Function un.onUninstSuccess
 FunctionEnd
 
 Function un.onInit
+    !insertmacro IsRunning
 
     IfSilent +3 
         MessageBox MB_ICONQUESTION|MB_YESNO|MB_TOPMOST "Are you sure you want to completely remove $(^Name) and all of its components?" IDYES +2 
