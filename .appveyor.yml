@@ -18,8 +18,8 @@ environment:
 #  - job_name: rpi
 #    appveyor_build_worker_image: Ubuntu1604
 
-  GITHUB_TOKEN:
-     secure: 3B4WGUJ5HrQ0rasOgIG44TQuAao6pKyar0XNwXifR0W6KtT54DvUUJzYMdqi7+IM
+#  GITHUB_TOKEN:
+#     secure: 3B4WGUJ5HrQ0rasOgIG44TQuAao6pKyar0XNwXifR0W6KtT54DvUUJzYMdqi7+IM
   
 matrix:
   allow_failures:
