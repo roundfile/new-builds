@@ -9,17 +9,17 @@ clone_depth: 1
 
 environment:
   matrix:
-  - job_name: windows
-    appveyor_build_worker_image: Visual Studio 2019
+#  - job_name: windows
+#    appveyor_build_worker_image: Visual Studio 2019
 #  - job_name: macos
 #    appveyor_build_worker_image: macos
-#  - job_name: linux
-#    appveyor_build_worker_image: Ubuntu1604
+  - job_name: linux
+    appveyor_build_worker_image: Ubuntu1604
 #  - job_name: rpi
 #    appveyor_build_worker_image: Ubuntu1604
 
-  GITHUB_TOKEN:
-     secure: 3B4WGUJ5HrQ0rasOgIG44TQuAao6pKyar0XNwXifR0W6KtT54DvUUJzYMdqi7+IM
+#  GITHUB_TOKEN:
+##     secure: 3B4WGUJ5HrQ0rasOgIG44TQuAao6pKyar0XNwXifR0W6KtT54DvUUJzYMdqi7+IM
   
 matrix:
   allow_failures:
@@ -29,7 +29,7 @@ init:
   # Set "build version number" shown in appveyor build status to the commit hash
   - ps: Update-AppveyorBuild -Version "$($env:APPVEYOR_REPO_COMMIT.substring(0,7))"
   - ps: if($Env:inhibit_deploy -eq 'true'){Write-Host "**** Deploy Inhibited ****"}
-  - ps: Write-Host $env:GITHUB_TOKEN
+#  - ps: Write-Host $env:GITHUB_TOKEN
 
 branches:
   only:
