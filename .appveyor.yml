@@ -58,9 +58,9 @@ for:
     - ps: Write-Host "${env:APPVEYOR_REPO_COMMIT_MESSAGE}"
     - ps: Write-Host "$env:APPVEYOR_REPO_COMMIT_MESSAGE_EXTENDED"
     - ps: bash test.sh
-    - python -V
 
     - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
+    - python -V
     - "%PYTHON%\\python.exe -m pip install --upgrade pip"
     - "%PYTHON%\\python.exe -m pip install wheel"
     - "%PYTHON%\\python.exe -m pip install .ci\\pyinstaller-4.1+f9eeaaf9c0-py3-none-any.whl"
