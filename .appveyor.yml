@@ -58,6 +58,7 @@ for:
     - ps: Write-Host "${env:APPVEYOR_REPO_COMMIT_MESSAGE}"
     - ps: Write-Host "$env:APPVEYOR_REPO_COMMIT_MESSAGE_EXTENDED"
     - ps: bash test.sh
+    - python -V
 
     - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
     - "%PYTHON%\\python.exe -m pip install --upgrade pip"
