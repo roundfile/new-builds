@@ -201,4 +201,4 @@ for:
     - curl -L -O https://github.com/roasterdave/uploadtool/raw/master/upload.sh
     - export UPLOADTOOL_BODY="WARNING pre-release builds may not work. Use at your own risk."
     - export UPLOADTOOL_ISPRERELEASE=true
-    - bash upload.sh artisan-*.deb
+#    - bash upload.sh artisan-*.deb
