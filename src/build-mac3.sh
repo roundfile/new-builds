@@ -20,20 +20,12 @@ if [ ! -z $APPVEYOR ]; then
 else
     # standard local builds
     echo "NOTICE: Standard build"
-    export PYTHON=/Library/Frameworks/Python.framework/Versions/3.8
-#    export PYTHON=/Users/luther/.pyenv/versions/3.8.2
+    export PYTHON_V=3.9	
+    export PYTHON=/Library/Frameworks/Python.framework/Versions/${PYTHON_V}
     export PYTHONBIN=$PYTHON/bin
-    export PYTHONPATH=$PYTHON/lib/python3.8
-    export PYTHON_V=3.8
-
-# for Python 3.7 builds:
-#    export PYTHON=/Library/Frameworks/Python.framework/Versions/3.7
-#    export PYTHONBIN=$PYTHON/bin
-#    export PYTHONPATH=$PYTHON/lib/python3.7
-#    export PYTHON_V=3.7
+    export PYTHONPATH=$PYTHON/lib/python${PYTHON_V}
 
     export QT_PATH=${PYTHONPATH}/site-packages/PyQt5/Qt
-    #export QT_SRC_PATH=~/Qt5.14.2/5.14.2/clang_64
     export QT_SRC_PATH=~/Qt5.15.2/5.15.2/clang_64
     export MACOSX_DEPLOYMENT_TARGET=10.15
     export DYLD_LIBRARY_PATH=$PYTHON/lib:$DYLD_LIBRARY_PATH
@@ -51,9 +43,7 @@ $PYTHONBIN/pylupdate5 artisan.pro
 #/Users/appveyor/venv3.8.6/bin/pylupdate5 artisan.pro
 
 # there is no full Qt installation on Travis, thus don't run  lrelease
-#dave flip this conditional
-if [ ! -z $APPVEYOR ]; then
-#if [ -z $APPVEYOR ]; then
+if [ -z $APPVEYOR ]; then
     echo "************* 2 **************"
     $QT_SRC_PATH/bin/lrelease -verbose artisan.pro || true
     for f in translations/qtbase_*.ts

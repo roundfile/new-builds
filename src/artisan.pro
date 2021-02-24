@@ -46,6 +46,7 @@ SOURCES = \
     artisanlib/statistics.py \
     artisanlib/transposer.py \
     artisanlib/wheels.py \
+    artisanlib/command_utility.py \
     const/UIconst.py \
     help/alarms_help.py \
     help/autosave_help.py \
@@ -89,4 +90,5 @@ TRANSLATIONS = \
 	translations/artisan_pl.ts \
 	translations/artisan_id.ts \
 	translations/artisan_th.ts \
-	translations/artisan_fa.ts
+	translations/artisan_fa.ts \
+	translations/artisan_vi.ts

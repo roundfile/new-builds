@@ -88,11 +88,10 @@ RequestExecutionLevel admin
   notRunning:
 !macroEnd
 
-
 ; HM NIS Edit Wizard helper defines
 !define pyinstallerOutputDir 'dist/artisan'
 !define PRODUCT_NAME "Artisan"
-!define PRODUCT_VERSION "2.4.4.0"
+!define PRODUCT_VERSION "2.4.5.0"
 !define PRODUCT_PUBLISHER "The Artisan Team"
 !define PRODUCT_WEB_SITE "https://github.com/artisan-roaster-scope/artisan/blob/master/README.md"
 !define PRODUCT_DIR_REGKEY "Software\Microsoft\Windows\CurrentVersion\App Paths\artisan.exe"
@@ -151,6 +150,7 @@ ShowUnInstDetails show
 
 Function .onInit
   !insertmacro IsRunning
+
   ${If} ${RunningX64}
     ReadRegStr $R0 ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" \
     "UninstallString"

@@ -100,7 +100,7 @@ CONF_MENU_DEVICE = QApplication.translate("Menu", "Device...", None)
 CONF_MENU_SERIALPORT = QApplication.translate("Menu", "Port...", None)
 CONF_MENU_SAMPLING = QApplication.translate("Menu", "Sampling...", None)
 CONF_MENU_OVERSAMPLING = QApplication.translate("Menu", "Oversampling", None)
-CONF_MENU_SUSTAINABILITY = QApplication.translate("Menu", "Sustainability", None)
+CONF_MENU_OVERSAMPLING = QApplication.translate("Menu", "Oversampling", None)
 CONF_MENU_COLORS = QApplication.translate("Menu", "Colors...", None)
 CONF_MENU_CONTROLS = QApplication.translate("Menu", "Controls", None)
 CONF_MENU_READINGS = QApplication.translate("Menu", "Readings", None)
@@ -141,6 +141,7 @@ CONF_MENU_RUSSIAN = "\u0420\u0443\u0441\u0441\u043a\u0438\u0439" # Do not transl
 CONF_MENU_SWEDISH = "Svenska" # Do not translate
 CONF_MENU_THAI = "Thai" # Do not translate
 CONF_MENU_TURKISH = "T\xfcrk\u00e7e" # Do not translate
+CONF_MENU_VIETNAMESE = "Ti\u1EBFng Vi\u1EC7t" # Do not translate
 CONF_MENU_CHINESE_CN = "\u7b80\u4f53\u4e2d\u6587" # Do not translate
 CONF_MENU_CHINESE_TW = "\u7e41\u9ad4\u4e2d\u6587" # Do not translate
 

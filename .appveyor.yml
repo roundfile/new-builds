@@ -1,11 +1,11 @@
 # Generic build number, later set to commit hash by init
 version: '{build}'
 
-# Include "nodeploy" in the commit message to prevent deployment to github
-
 # Do not build on tags (GitHub only)
 skip_tags: true
 clone_depth: 1
+
+# Include "nodeploy" in the commit message to prevent deployment to github
 
 environment:
   matrix:
@@ -13,14 +13,11 @@ environment:
     appveyor_build_worker_image: Visual Studio 2019
   - job_name: macos
     appveyor_build_worker_image: macos
-#  - job_name: linux
-#    appveyor_build_worker_image: Ubuntu1604
+  - job_name: linux
+    appveyor_build_worker_image: Ubuntu1604
 #  - job_name: rpi
 #    appveyor_build_worker_image: Ubuntu1604
 
-#  GITHUB_TOKEN:
-##     secure: 3B4WGUJ5HrQ0rasOgIG44TQuAao6pKyar0XNwXifR0W6KtT54DvUUJzYMdqi7+IM
-  
 matrix:
   allow_failures:
     - job_name: rpi
@@ -29,14 +26,13 @@ init:
   # Set "build version number" shown in appveyor build status to the commit hash
   - ps: Update-AppveyorBuild -Version "$($env:APPVEYOR_REPO_COMMIT.substring(0,7))"
   - ps: if($Env:inhibit_deploy -eq 'true'){Write-Host "**** Deploy Inhibited ****"}
-#  - ps: Write-Host $env:GITHUB_TOKEN
 
 branches:
   only:
-    - master     
-        
+    - master
+
 stack:
-  python 3.9
+  python 3.8
 
 for:
 -
@@ -49,18 +45,10 @@ for:
     PYTHON: "C:\\Python38-x64"
     UPLOADTOOL_BODY:
       "WARNING: pre-release builds may not work. Use at your own risk."
-  stack:
-    python 3.8
 
   install:
     - echo "Windows Install"
-
-    - ps: Write-Host "${env:APPVEYOR_REPO_COMMIT_MESSAGE}"
-    - ps: Write-Host "$env:APPVEYOR_REPO_COMMIT_MESSAGE_EXTENDED"
-    - ps: bash test.sh
-
     - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
-    - python -V
     - "%PYTHON%\\python.exe -m pip install --upgrade pip"
     - "%PYTHON%\\python.exe -m pip install wheel"
     - "%PYTHON%\\python.exe -m pip install .ci\\pyinstaller-4.1+f9eeaaf9c0-py3-none-any.whl"
@@ -108,9 +96,8 @@ for:
 #    - path: 'src\artisan-*.zip'
 
   deploy_script:
-#    - cmd: curl -L -O https://github.com/roundfile/uploadtool/raw/master/upload.sh
-    - cmd: cp ..\uploadtool.sh uploadtool.sh
-    - cmd: bash uploadtool.sh artisan-*.zip
+    - cmd: curl -L -O https://github.com/roasterdave/uploadtool/raw/master/upload.sh
+    - cmd: bash upload.sh artisan-*.zip
 
 
 -
@@ -129,23 +116,22 @@ for:
 
   install:
     - echo "MacOS Install"
-    - python -V
     - chmod +x .ci/*.sh
     - export GIT_VERSION=`git rev-parse --verify --short HEAD 2>/dev/null|| echo "???"`
     - sed -i'' -e "s/__revision__ = '0'/__revision__ = '$GIT_VERSION'/" src/artisanlib/__init__.py
     - .ci/install-${ARTISAN_OS}.sh
 
   build_script:
-    - echo "MacOS Build"  
+    - echo "MacOS Build"
     - chmod +x src/*.sh
     - .ci/script-${ARTISAN_OS}.sh
-    
+
 #  artifacts:
 #    - path: 'src/artisan-*.dmg'
 
   deploy_script:
     - cd src
-    - curl -L -O https://github.com/roundfile/uploadtool/raw/master/upload.sh
+    - curl -L -O https://github.com/roasterdave/uploadtool/raw/master/upload.sh
     - export UPLOADTOOL_BODY="WARNING pre-release builds may not work. Use at your own risk."
     - export UPLOADTOOL_ISPRERELEASE=true
     - bash upload.sh artisan-*.dmg
@@ -161,14 +147,14 @@ for:
     PYTHON: $HOME/venv3.8
 
   install:
-    - echo "Linux Install"  
+    - echo "Linux Install"
     - chmod +x .ci/*.sh
     - export GIT_VERSION=`git rev-parse --verify --short HEAD 2>/dev/null|| echo "???"`
     - sed -i'' -e "s/__revision__ = '0'/__revision__ = '$GIT_VERSION'/" src/artisanlib/__init__.py
     - .ci/install-${ARTISAN_OS}.sh
 
   build_script:
-    - echo "Linux Build"  
+    - echo "Linux Build"
     - chmod +x src/*.sh
     - .ci/script-${ARTISAN_OS}.sh
 
@@ -178,11 +164,12 @@ for:
 
   deploy_script:
     - cd src
-    - curl -L -O https://github.com/roundfile/uploadtool/raw/master/upload.sh
+    - curl -L -O https://github.com/roasterdave/uploadtool/raw/master/upload.sh
     - export UPLOADTOOL_BODY="WARNING pre-release builds may not work. Use at your own risk."
     - export UPLOADTOOL_ISPRERELEASE=true
     - bash upload.sh artisan-*.deb
     - bash upload.sh artisan-*.rpm
+    - bash upload.sh artisan-*.AppImage
 
 -
   matrix:
@@ -195,14 +182,14 @@ for:
     PYTHON: $HOME/venv3.8
 
   install:
-    - echo "RPI Install"  
+    - echo "RPI Install"
     - chmod +x ./.ci/*.sh
     - export GIT_VERSION=`git rev-parse --verify --short HEAD 2>/dev/null|| echo "???"`
     - sed -i'' -e "s/__revision__ = '0'/__revision__ = '$GIT_VERSION'/" src/artisanlib/__init__.py
     - .ci/install-${ARTISAN_OS}.sh
 
   build_script:
-    - echo "RPI Build"  
+    - echo "RPI Build"
     - chmod +x src/*.sh
     - .ci/script-${ARTISAN_OS}.sh
 
@@ -211,7 +198,7 @@ for:
 
   deploy_script:
     - cd src
-    - curl -L -O https://github.com/roundfile/uploadtool/raw/master/upload.sh
+    - curl -L -O https://github.com/roasterdave/uploadtool/raw/master/upload.sh
     - export UPLOADTOOL_BODY="WARNING pre-release builds may not work. Use at your own risk."
     - export UPLOADTOOL_ISPRERELEASE=true
     - bash upload.sh artisan-*.deb

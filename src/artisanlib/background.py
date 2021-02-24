@@ -52,6 +52,7 @@ class backgroundDlg(ArtisanResizeablDialog):
         backgroundDeltaBTflagLabel = QLabel(deltaLabelPrefix + QApplication.translate("Label","BT", None))
         self.backgroundETflag = QCheckBox(QApplication.translate("CheckBox","ET", None))
         self.backgroundBTflag = QCheckBox(QApplication.translate("CheckBox","BT", None))
+        self.backgroundFullflag = QCheckBox(QApplication.translate("CheckBox","Show Full", None))
         self.backgroundCheck.setChecked(self.aw.qmc.background)
         self.backgroundDetails.setChecked(self.aw.qmc.backgroundDetails)
         self.backgroundeventsflag.setChecked(self.aw.qmc.backgroundeventsflag)
@@ -59,6 +60,7 @@ class backgroundDlg(ArtisanResizeablDialog):
         self.backgroundDeltaBTflag.setChecked(self.aw.qmc.DeltaBTBflag)
         self.backgroundETflag.setChecked(self.aw.qmc.backgroundETcurve)
         self.backgroundBTflag.setChecked(self.aw.qmc.backgroundBTcurve)
+        self.backgroundFullflag.setChecked(self.aw.qmc.backgroundShowFullflag)
         loadButton = QPushButton(QApplication.translate("Button","Load", None))
         loadButton.setFocusPolicy(Qt.NoFocus)
         delButton = QPushButton(QApplication.translate("Button","Delete", None))
@@ -131,6 +133,7 @@ class backgroundDlg(ArtisanResizeablDialog):
         self.backgroundDeltaBTflag.clicked.connect(self.readChecks)
         self.backgroundETflag.clicked.connect(self.readChecks)
         self.backgroundBTflag.clicked.connect(self.readChecks)
+        self.backgroundFullflag.clicked.connect(self.readChecks)
         delButton.clicked.connect(self.delete)
         self.upButton.clicked.connect(self.moveUp)
         self.downButton.clicked.connect(self.moveDown)
@@ -191,6 +194,15 @@ class backgroundDlg(ArtisanResizeablDialog):
         self.etimeSpinBox.setRange(1,60)
         self.etimeSpinBox.setValue(self.aw.qmc.detectBackgroundEventTime)
         self.etimeSpinBox.valueChanged.connect(self.setreproduce)
+        self.clearBgbeforeprofileload = QCheckBox(QApplication.translate("CheckBox","Clear the background before loading a new profile",None))
+        self.clearBgbeforeprofileload.setChecked(self.aw.qmc.clearBgbeforeprofileload)
+        self.clearBgbeforeprofileload.setFocusPolicy(Qt.NoFocus)
+        self.clearBgbeforeprofileload.stateChanged.connect(self.optclearbgbeforeprofileload)
+        self.hideBgafterprofileload = QCheckBox(QApplication.translate("CheckBox","Always hide background when loading a profile",None))
+        self.hideBgafterprofileload.setChecked(self.aw.qmc.hideBgafterprofileload)
+        self.hideBgafterprofileload.setFocusPolicy(Qt.NoFocus)
+        self.hideBgafterprofileload.stateChanged.connect(self.opthideBgafterprofileload)
+        
         #LAYOUT MANAGERS
         movelayout = QGridLayout()
         movelayout.addWidget(self.upButton,0,1)
@@ -212,12 +224,15 @@ class backgroundDlg(ArtisanResizeablDialog):
         checkslayout1.addWidget(self.backgroundBTflag)
         checkslayout1.addSpacing(5)
         checkslayout1.addWidget(self.backgroundDeltaETflag)
+        checkslayout1.addSpacing(3)
         checkslayout1.addWidget(backgroundDeltaETflagLabel)
         checkslayout1.addSpacing(5)
         checkslayout1.addWidget(self.backgroundDeltaBTflag)
+        checkslayout1.addSpacing(3)
         checkslayout1.addWidget(backgroundDeltaBTflagLabel)
+        checkslayout1.addSpacing(5)
+        checkslayout1.addWidget(self.backgroundFullflag)
         checkslayout1.addStretch()
-        checkslayout1.setSpacing(15)
         layout = QGridLayout()
         layoutBoxedH = QHBoxLayout()
         layoutBoxedH.addStretch()
@@ -254,11 +269,16 @@ class backgroundDlg(ArtisanResizeablDialog):
         tab4content.addWidget(self.backgroundPlaybackDROP)
         tab4content.addSpacing(10)
         tab4content.addWidget(self.replayComboBox)
+        optcontent = QHBoxLayout()
+        optcontent.addWidget(self.clearBgbeforeprofileload)
+        optcontent.addStretch()
+        optcontent.addWidget(self.hideBgafterprofileload)
         tab1layout = QVBoxLayout()
         tab1layout.addLayout(layoutBoxed)
 #        tab1layout.addStretch()
         tab1layout.addLayout(alignButtonBoxed)
         tab1layout.addLayout(tab4content)
+        tab1layout.addLayout(optcontent)
         tab1layout.setContentsMargins(5, 0, 5, 0) # left, top, right, bottom
         eventbuttonLayout = QHBoxLayout()
         eventbuttonLayout.addWidget(self.copyeventTableButton)
@@ -380,6 +400,20 @@ class backgroundDlg(ArtisanResizeablDialog):
             s = "background-color:'transparent';"
         self.aw.sendmessage(msg, style=s)
 
+    @pyqtSlot(int)
+    def optclearbgbeforeprofileload(self,_):
+        if self.clearBgbeforeprofileload.isChecked():
+            self.aw.qmc.clearBgbeforeprofileload = True
+        else:
+            self.aw.qmc.clearBgbeforeprofileload = False
+
+    @pyqtSlot(int)
+    def opthideBgafterprofileload(self,_):
+        if self.hideBgafterprofileload.isChecked():
+            self.aw.qmc.hideBgafterprofileload = True
+        else:
+            self.aw.qmc.hideBgafterprofileload = False
+
     def adjustcolor(self,curve):
         
         curve = str(curve).lower()
@@ -478,6 +512,7 @@ class backgroundDlg(ArtisanResizeablDialog):
         self.aw.qmc.DeltaBTBflag = bool(self.backgroundDeltaBTflag.isChecked())
         self.aw.qmc.backgroundETcurve = bool(self.backgroundETflag.isChecked())
         self.aw.qmc.backgroundBTcurve = bool(self.backgroundBTflag.isChecked())
+        self.aw.qmc.backgroundShowFullflag = bool(self.backgroundFullflag.isChecked())
         self.aw.qmc.redraw(recomputeAllDeltas=True)
     
     @pyqtSlot(int)
