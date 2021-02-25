@@ -27,7 +27,7 @@ init:
   - ps: Write-Host "---- Hello"
   - ps: Write-Host $env:APPVEYOR_REPO_COMMIT
   - ps: Write-Host $($env:APPVEYOR_REPO_COMMIT.substring(0,7))
-  - ps: Update-AppveyorBuild -Version "$($env:APPVEYOR_REPO_COMMIT.substring(0,7))"
+  - ps: Update-AppveyorBuild -Version $($env:APPVEYOR_REPO_COMMIT.substring(0,7))
   - ps: Write-Host $env:APPVEYOR_BUILD_VERSION
   - ps: if($Env:inhibit_deploy -eq 'true'){Write-Host "**** Deploy Inhibited ****"}
 
