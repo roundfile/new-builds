@@ -23,12 +23,8 @@ matrix:
     - job_name: rpi
 
 init:
-  # Set "build version number" shown in appveyor build status to the commit hash
-  - ps: Write-Host "---- Hello"
-  - ps: Write-Host $env:APPVEYOR_REPO_COMMIT
-  - ps: Write-Host $($env:APPVEYOR_REPO_COMMIT.substring(0,7))
-  - ps: Update-AppveyorBuild -Version $($env:APPVEYOR_REPO_COMMIT.substring(0,7))
-  - ps: Write-Host $env:APPVEYOR_BUILD_VERSION
+  # Set "build version number" shown in appveyor build status to the commit hash, the build number keeps it unique
+  - ps: Update-AppveyorBuild -Version "$($env:APPVEYOR_REPO_COMMIT.substring(0,7)) ($env:APPVEYOR_BUILD_VERSION)"
   - ps: if($Env:inhibit_deploy -eq 'true'){Write-Host "**** Deploy Inhibited ****"}
 
 branches:
@@ -99,9 +95,9 @@ for:
 #  artifacts:
 #    - path: 'src\artisan-*.zip'
 
-#  deploy_script:
-#    - cmd: curl -L -O https://github.com/roasterdave/uploadtool/raw/master/upload.sh
-#    - cmd: bash upload.sh artisan-*.zip
+  deploy_script:
+    - cmd: curl -L -O https://github.com/roasterdave/uploadtool/raw/master/upload.sh
+    - cmd: bash upload.sh artisan-*.zip
 
 
 -
@@ -133,12 +129,12 @@ for:
 #  artifacts:
 #    - path: 'src/artisan-*.dmg'
 
-#  deploy_script:
-#    - cd src
-#    - curl -L -O https://github.com/roasterdave/uploadtool/raw/master/upload.sh
-#    - export UPLOADTOOL_BODY="WARNING pre-release builds may not work. Use at your own risk."
-#    - export UPLOADTOOL_ISPRERELEASE=true
-#    - bash upload.sh artisan-*.dmg
+  deploy_script:
+    - cd src
+    - curl -L -O https://github.com/roasterdave/uploadtool/raw/master/upload.sh
+    - export UPLOADTOOL_BODY="WARNING pre-release builds may not work. Use at your own risk."
+    - export UPLOADTOOL_ISPRERELEASE=true
+    - bash upload.sh artisan-*.dmg
 
 -
   matrix:
@@ -166,14 +162,14 @@ for:
 #    - path: 'src/artisan-*.deb'
 #    - path: 'src/artisan-*.rpm'
 
-#  deploy_script:
-#    - cd src
-#    - curl -L -O https://github.com/roasterdave/uploadtool/raw/master/upload.sh
-#    - export UPLOADTOOL_BODY="WARNING pre-release builds may not work. Use at your own risk."
-#    - export UPLOADTOOL_ISPRERELEASE=true
-#    - bash upload.sh artisan-*.deb
-#    - bash upload.sh artisan-*.rpm
-#    - bash upload.sh artisan-*.AppImage
+  deploy_script:
+    - cd src
+    - curl -L -O https://github.com/roasterdave/uploadtool/raw/master/upload.sh
+    - export UPLOADTOOL_BODY="WARNING pre-release builds may not work. Use at your own risk."
+    - export UPLOADTOOL_ISPRERELEASE=true
+    - bash upload.sh artisan-*.deb
+    - bash upload.sh artisan-*.rpm
+    - bash upload.sh artisan-*.AppImage
 
 -
   matrix:
@@ -200,9 +196,9 @@ for:
 #  artifacts:
 #    - path: 'src/artisan-*.deb'
 
-#  deploy_script:
-#    - cd src
-#    - curl -L -O https://github.com/roasterdave/uploadtool/raw/master/upload.sh
-#    - export UPLOADTOOL_BODY="WARNING pre-release builds may not work. Use at your own risk."
-#    - export UPLOADTOOL_ISPRERELEASE=true
-#    - bash upload.sh artisan-*.deb
+  deploy_script:
+    - cd src
+    - curl -L -O https://github.com/roasterdave/uploadtool/raw/master/upload.sh
+    - export UPLOADTOOL_BODY="WARNING pre-release builds may not work. Use at your own risk."
+    - export UPLOADTOOL_ISPRERELEASE=true
+    - bash upload.sh artisan-*.deb
