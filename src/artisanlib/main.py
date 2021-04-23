@@ -48,6 +48,20 @@ signal.signal(signal.SIGINT, signal.SIG_DFL)
 
 from unidecode import unidecode
 
+## MONKEY PATCH BEGIN: importlib.metadata fix for macOS builds with py2app that fails to set proper metadata for prettytable >0.7.2 and thus fail
+## on import with importlib.metadata.PackageNotFoundError: prettytable on __version__ = importlib_metadata.version(__name__)
+try:
+    import importlib.metadata as importlib_metadata
+    def md_version(pkg_name):
+        if pkg_name == "prettytable":
+            return '2.1.0'
+        else:
+            return importlib_metadata.version(pkg_name)
+    importlib_metadata.version = md_version
+except:
+    pass
+## MONKEY PATCH END:
+
 import prettytable  # @UnresolvedImport
 
 #try:
@@ -659,7 +673,6 @@ from artisanlib.autosave import autosaveDlg
 from artisanlib.platform import platformDlg
 from artisanlib.pid_control import FujiPID, PIDcontrol, DtaPID
 from artisanlib.widgets import MyQLCDNumber
-from artisanlib.polyhack import polyhackDlg  #dave polyfit
 
 from artisanlib import pid
 from artisanlib.time import ArtisanTime
@@ -7948,7 +7961,7 @@ class tgraphcanvas(FigureCanvas):
                                 trans = self.delta_ax.transData
                             else:
                                 trans = self.ax.transData
-                            if not self.flagstart and not self.foregroundShowFullflag and len(self.extrastemp1[i]) > 0:
+                            if not self.flagstart and not self.foregroundShowFullflag and len(self.extrastemp2[i]) > 0:
                                 visible_extratemp2 = [None]*charge_idx + self.extrastemp2[i][charge_idx:drop_idx+1] + [None]*(len(self.extratimex[i])-drop_idx-1)
                             else:
                                 visible_extratemp2 = self.extrastemp2[i]
@@ -9889,11 +9902,9 @@ class tgraphcanvas(FigureCanvas):
             aw.sendmessage(QApplication.translate("Message","Scope recording...", None))
             aw.button_2.setEnabled(False)
             aw.button_2.setGraphicsEffect(None)
-#            QApplication.processEvents()
             aw.button_1.setText(QApplication.translate("Button", "OFF",None)) # text means click to turn OFF (it is ON)
             aw.button_1.setToolTip(QApplication.translate("Tooltip", "Stop recording", None))
             aw.button_1.setEnabled(True) # ensure that the OFF button is enabled
-#            QApplication.processEvents()
             #disable RESET button:
             aw.button_7.setEnabled(False)
             aw.button_18.setEnabled(True)
@@ -33796,9 +33807,7 @@ class ApplicationWindow(QMainWindow):
     @pyqtSlot()
     @pyqtSlot(bool)
     def calculator(self,_=False):
-        #dave polyfit
-        #dialog = calculatorDlg(self,self)
-        dialog = polyhackDlg(self,self)
+        dialog = calculatorDlg(self,self)
         dialog.setModal(False)
         dialog.show()
         QApplication.processEvents()
