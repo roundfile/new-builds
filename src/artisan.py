@@ -2,7 +2,7 @@
 """
 Start the application.
 """
- 
+
 import warnings
 warnings.simplefilter("ignore", DeprecationWarning)
 
