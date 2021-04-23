@@ -27,9 +27,14 @@ import plus.util
 import plus.stock
 
 from artisanlib.suppress_errors import suppress_stdout_stderr
-from artisanlib.util import deltaLabelUTF8,stringfromseconds,stringtoseconds, appFrozen
+from artisanlib.util import deltaLabelUTF8, appFrozen, stringfromseconds,stringtoseconds, toInt, toFloat
 from artisanlib.dialogs import ArtisanDialog, ArtisanResizeablDialog
-from artisanlib.widgets import MyQComboBox, ClickableQLabel, ClickableTextEdit, MyQDoubleSpinBox
+from artisanlib.widgets import MyQComboBox, ClickableQLabel, ClickableTextEdit, MyTableWidgetItemNumber
+
+from help import energy_help
+
+from uic import EnergyWidget 
+from uic import SetupWidget
 
 from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot, QRegularExpression, QSettings, QTimer, QEvent
 from PyQt5.QtGui import QColor, QIntValidator, QRegularExpressionValidator, QKeySequence, QPalette
@@ -620,6 +625,10 @@ class editGraphDlg(ArtisanResizeablDialog):
         self.setModal(True)
         self.setWindowTitle(QApplication.translate("Form Caption","Roast Properties",None))
         
+        # register per tab if all its widgets and data has been initialized
+        # initialization of some tabs is delayed for efficiency reasons until they are opened for the first time
+        self.tabInitialized = [False]*6 # 0: Roast, 1: Notes, 2: Events, 3: Data, 4: Energy, 5: Setup
+        
         # we remember user modifications to revert to them on deselecting a plus element
         self.modified_beans = self.aw.qmc.beans
         self.modified_density_in_text = str(self.aw.float2float(self.aw.qmc.density[0]))
@@ -943,33 +952,9 @@ class editGraphDlg(ArtisanResizeablDialog):
         self.beansedit = ClickableTextEdit()
         self.beansedit.editingFinished.connect(self.beansEdited)
         
-#        self.beansedit.setMaximumHeight(60)
         if self.aw.qmc.beans is not None:
             self.beansedit.setNewPlainText(self.aw.qmc.beans)
-                    
-        #roaster
-        self.roaster = QLineEdit(self.aw.qmc.roastertype)
-        self.roaster.setCursorPosition(0)
-        #operator
-        self.operator = QLineEdit(self.aw.qmc.operator)
-        self.operator.setCursorPosition(0)
-        #organization
-        self.organization = QLineEdit(self.aw.qmc.organization)
-        self.organization.setCursorPosition(0)
-        #machine capacity
-        self.capacity = MyQDoubleSpinBox()
-        self.capacity.setDecimals(1)
-        self.capacity.setSingleStep(0.5)
-        self.capacity.setRange(0.,500)
-        self.capacity.setAlignment(Qt.AlignRight)
-        self.capacity.setMinimumWidth(30)
-        self.capacity.setValue(3.0)
-        self.capacity.setSuffix("kg")
-        self.capacity.setValue(self.aw.qmc.roastersize)
-        #drum speed
-        self.drumspeed = QLineEdit(self.aw.qmc.drumspeed)
-        self.drumspeed.setAlignment(Qt.AlignCenter)
-        self.drumspeed.setCursorPosition(0)
+
         #weight
         weightlabel = QLabel("<b>" + QApplication.translate("Label", "Weight",None) + "</b>")
         green_label = QLabel("<b>" + QApplication.translate("Label", "Green",None) + "</b>")
@@ -1190,14 +1175,6 @@ class editGraphDlg(ArtisanResizeablDialog):
         self.scaleWeightAccumulated = ClickableQLabel("")
         self.scaleWeightAccumulated.clicked.connect(self.resetScaleSet)
         # NOTES
-        roastertypelabel = QLabel()
-        roastertypelabel.setText("<b>" + QApplication.translate("Label", "Machine",None) + "</b>")
-        operatorlabel = QLabel()
-        operatorlabel.setText("<b> " + QApplication.translate("Label", "Operator",None) + "</b>")
-        organizationlabel = QLabel()
-        organizationlabel.setText("<b> " + QApplication.translate("Label", "Organization",None) + "</b>")
-        drumspeedlabel = QLabel()
-        drumspeedlabel.setText("<b> " + QApplication.translate("Label", "Drum Speed",None) + "</b>")
         roastinglabel = QLabel("<b>" + QApplication.translate("Label", "Roasting Notes",None) + "</b>")
         self.roastingeditor = QTextEdit()
 #        self.roastingeditor.setMaximumHeight(125)
@@ -1220,7 +1197,7 @@ class editGraphDlg(ArtisanResizeablDialog):
         self.lightCut.stateChanged.connect(self.roastflagLightCutChanged)
         self.darkCut = QCheckBox(QApplication.translate("CheckBox","Dark Cut", None))
         self.darkCut.setChecked(self.aw.qmc.darkCut_flag)
-        self.darkCut.stateChanged.connect(self.roastflagDarkCutChanged)        
+        self.darkCut.stateChanged.connect(self.roastflagDarkCutChanged)
         self.drops = QCheckBox(QApplication.translate("CheckBox","Drops", None))
         self.drops.setChecked(self.aw.qmc.drops_flag)
         self.drops.stateChanged.connect(self.roastflagDropsChanged)
@@ -1416,24 +1393,6 @@ class editGraphDlg(ArtisanResizeablDialog):
         textLayout.addLayout(titleLine,3,1)
         textLayout.addWidget(beanslabel,4+textLayoutPlusOffset,0)
         textLayout.addWidget(self.beansedit,4+textLayoutPlusOffset,1)
-        textLayout.addWidget(operatorlabel,5+textLayoutPlusOffset,0)
-            
-        roasteroperator = QHBoxLayout()
-        roasteroperator.addWidget(self.operator, stretch=3)
-        roasteroperator.addSpacing(8)
-        roasteroperator.addWidget(organizationlabel)
-        roasteroperator.addSpacing(2)
-        roasteroperator.addWidget(self.organization, stretch=3)
-        roasteroperator.addSpacing(8)
-        roasteroperator.addWidget(roastertypelabel)
-        roasteroperator.addSpacing(2)
-        roasteroperator.addWidget(self.roaster,stretch=3)
-        roasteroperator.addWidget(self.capacity)
-        roasteroperator.addSpacing(8)
-        roasteroperator.addWidget(drumspeedlabel)
-        roasteroperator.addSpacing(2)
-        roasteroperator.addWidget(self.drumspeed,stretch=1)
-        textLayout.addLayout(roasteroperator,5+textLayoutPlusOffset,1)
         
         beanSizeLayout = QHBoxLayout()
         beanSizeLayout.setSpacing(2)
@@ -1612,7 +1571,7 @@ class editGraphDlg(ArtisanResizeablDialog):
         self.tab1aLayout.addLayout(ambientGrid)
         tab1Layout = QVBoxLayout()
 #        tab1Layout.addStretch()
-        tab1Layout.setContentsMargins(5, 5, 5, 5) # left, top, right, bottom
+        tab1Layout.setContentsMargins(5, 5, 5, 2) # left, top, right, bottom
         tab1Layout.addLayout(self.tab1aLayout)
         tab1Layout.setSpacing(0)
 #        tab1Layout.addStretch()
@@ -1640,22 +1599,27 @@ class editGraphDlg(ArtisanResizeablDialog):
         self.TabWidget.setContentsMargins(0,0,0,0)
         C1Widget = QWidget()
         C1Widget.setLayout(tab1Layout)
-        self.TabWidget.addTab(C1Widget,QApplication.translate("Tab", "General",None))
+        self.TabWidget.addTab(C1Widget,QApplication.translate("Tab", "Roast", None))
         C2Widget = QWidget()
         C2Widget.setLayout(tab2Layout)
-        self.TabWidget.addTab(C2Widget,QApplication.translate("Tab", "Notes",None))
+        self.TabWidget.addTab(C2Widget,QApplication.translate("Tab", "Notes", None))
         C3Widget = QWidget()
         C3Widget.setLayout(tab3Layout)
-        self.TabWidget.addTab(C3Widget,QApplication.translate("Tab", "Events",None))
+        self.TabWidget.addTab(C3Widget,QApplication.translate("Tab", "Events", None))
         C4Widget = QWidget()
         C4Widget.setLayout(tab4Layout)
-        self.TabWidget.addTab(C4Widget,QApplication.translate("Tab", "Data",None)) 
+        self.TabWidget.addTab(C4Widget,QApplication.translate("Tab", "Data", None))
+        self.C5Widget = QWidget()
+        self.TabWidget.addTab(self.C5Widget,QApplication.translate("Tab", "Energy", None))
+        self.C6Widget = QWidget()
+        self.TabWidget.addTab(self.C6Widget,QApplication.translate("Tab", "Setup", None))
+        #
         self.TabWidget.currentChanged.connect(self.tabSwitched)
         #incorporate layouts
         totallayout = QVBoxLayout()
         totallayout.addWidget(self.TabWidget)
         totallayout.addLayout(okLayout)
-        totallayout.setContentsMargins(10,10,10,0)
+        totallayout.setContentsMargins(10,10,10,0) # left, top, right, bottom
         totallayout.setSpacing(0)
         self.volume_percent()
         self.setLayout(totallayout)
@@ -1689,6 +1653,24 @@ class editGraphDlg(ArtisanResizeablDialog):
             self.dialogbuttons.button(QDialogButtonBox.Ok)
         else:
             self.dialogbuttons.button(QDialogButtonBox.Ok).setFocus()
+    
+    pyqtSlot(bool)
+    def SetupSetDefaults(self,_):
+        # set default machine settings from setup dialog
+        self.aw.qmc.organization_setup = self.setup_ui.lineEditOrganization.text()
+        self.aw.qmc.operator_setup = self.setup_ui.lineEditOperator.text()
+        self.aw.qmc.roastertype_setup = self.setup_ui.lineEditMachine.text()
+        self.aw.qmc.roastersize_setup = self.setup_ui.doubleSpinBoxRoasterSize.value()
+        self.aw.qmc.drumspeed_setup = self.setup_ui.lineEditDrumSpeed.text()
+    
+    pyqtSlot(bool)
+    def SetupDefaults(self,_):
+        # set default machine setup from settings
+        self.setup_ui.lineEditOrganization.setText(self.aw.qmc.organization_setup)
+        self.setup_ui.lineEditOperator.setText(self.aw.qmc.operator_setup)
+        self.setup_ui.lineEditMachine.setText(self.aw.qmc.roastertype_setup)
+        self.setup_ui.doubleSpinBoxRoasterSize.setValue(self.aw.qmc.roastersize_setup)
+        self.setup_ui.lineEditDrumSpeed.setText(self.aw.qmc.drumspeed_setup)
     
     def enableBatchEdit(self):
         if not self.aw.superusermode and not self.batcheditmode:
@@ -2407,7 +2389,7 @@ class editGraphDlg(ArtisanResizeablDialog):
                     # blend replacements not applied
                     self.updatePlusSelectedLine()
             
-            self.aw.sendmessage(QApplication.translate("Message","Recent roast properties '{0}' set".format(self.aw.recentRoastLabel(rr))))
+            self.aw.sendmessage(QApplication.translate("Message","Recent roast properties '{0}' set".format(self.aw.recentRoastLabel(rr),None)))
         self.recentRoastEnabled()
     
     @pyqtSlot("QString")
@@ -2558,6 +2540,8 @@ class editGraphDlg(ArtisanResizeablDialog):
         settings.setValue("RoastGeometry",self.saveGeometry())
         self.aw.editGraphDlg_activeTab = self.TabWidget.currentIndex()
         
+        self.restoreAllEnergySettings()
+        
         self.aw.qmc.beans = self.org_beans
         self.aw.qmc.density = self.org_density
         self.aw.qmc.density_roasted = self.org_density_roasted
@@ -2643,15 +2627,921 @@ class editGraphDlg(ArtisanResizeablDialog):
 
     @pyqtSlot(int)
     def tabSwitched(self,i):
-        if i == 0:
+        if i == 0: # Roast (always initialzed in __init__())
             self.saveEventTable()
-        elif i == 1:
+        elif i == 1: # Notes (always initialzed in __init__())
             self.saveEventTable()
-        elif i == 2:
+        elif i == 2: # Events (only initialized on first opening that tab)
             self.createEventTable()
-        elif i == 3:
+        elif i == 3: # Data (needs to be recreated every time as events might have been changed in tab "Events"
             self.saveEventTable()
             self.createDataTable()
+        elif i == 4: # Energy (only initialized on creation)
+            self.saveEventTable()
+            self.initEnergyTab()
+            self.updateMetricsLabel()
+        elif i == 5: # Setup (only initialized on creation)
+            self.saveEventTable()
+            self.initSetupTab()
+    
+    
+    ###### ENERGY TAB #####
+    
+    
+    def initEnergyTab(self):
+        if not self.tabInitialized[4]:
+            # fill Energy tab
+            self.energy_ui = EnergyWidget.Ui_EnergyWidget()
+            self.energy_ui.setupUi(self.C5Widget)
+            
+            self.helpdialog = None
+            
+            self.btu_list = []
+            
+            # remember parameters to enable a Cancel action
+            self.org_loadlabels = self.aw.qmc.loadlabels.copy()
+            self.org_loadratings = self.aw.qmc.loadratings.copy()
+            self.org_ratingunits = self.aw.qmc.ratingunits.copy()
+            self.org_sourcetypes = self.aw.qmc.sourcetypes.copy()
+            self.org_load_etypes = self.aw.qmc.load_etypes.copy()
+            self.org_presssure_percents = self.aw.qmc.presssure_percents.copy()
+            self.org_loadevent_zeropcts = self.aw.qmc.loadevent_zeropcts.copy()
+            self.org_loadevent_hundpcts = self.aw.qmc.loadevent_hundpcts.copy()
+            self.org_preheatDuration = self.aw.qmc.preheatDuration
+            self.org_preheatenergies = self.aw.qmc.preheatenergies.copy()
+            self.org_betweenbatchDuration = self.aw.qmc.betweenbatchDuration
+            self.org_betweenbatchenergies = self.aw.qmc.betweenbatchenergies.copy()
+            self.org_coolingDuration = self.aw.qmc.coolingDuration
+            self.org_coolingenergies = self.aw.qmc.coolingenergies.copy()
+            self.org_betweenbatch_after_preheat = self.aw.qmc.betweenbatch_after_preheat
+            self.org_electricEnergyMix = self.aw.qmc.electricEnergyMix
+                    
+            self.energy_ui.helpButton.clicked.connect(self.showenergyhelp)
+            
+            ### reset UI text lables and tooltips for propper translation
+            self.energy_ui.helpButton.setText(QApplication.translate("Button","Help",None))
+            self.energy_ui.tabWidget.setTabText(0,QApplication.translate("Tab","Details",None))
+            self.energy_ui.tabWidget.setTabText(1,QApplication.translate("Tab","Loads",None))
+            self.energy_ui.tabWidget.setTabText(2,QApplication.translate("Tab","Protocol",None))
+            self.energy_ui.resultunitLabel.setText(QApplication.translate("Label","Results in",None))
+            self.energy_ui.EnergyGroupBox.setTitle(QApplication.translate("GroupBox","Energy",None))
+            self.energy_ui.CO2GroupBox.setTitle(QApplication.translate("GroupBox","CO2",None))
+            # Details tab
+            self.energy_ui.copyTableButton.setText(QApplication.translate("Button","Copy Table",None))
+            self.energy_ui.copyTableButton.setToolTip(QApplication.translate("Tooltip","Copy table to clipboard, OPTION or ALT click for tabular text",None))
+            self.energy_ui.datatable.horizontalHeaderItem(0).setText(QApplication.translate("Table","Power",None))
+            self.energy_ui.datatable.horizontalHeaderItem(1).setText(QApplication.translate("Table","Duration",None))
+            self.energy_ui.datatable.horizontalHeaderItem(2).setText("BTU")
+            self.energy_ui.datatable.horizontalHeaderItem(3).setText(QApplication.translate("Table","CO2",None) + " (g)")
+            self.energy_ui.datatable.horizontalHeaderItem(4).setText(QApplication.translate("Table","Load",None))
+            self.energy_ui.datatable.horizontalHeaderItem(5).setText(QApplication.translate("Table","Source",None))
+            self.energy_ui.datatable.horizontalHeaderItem(6).setText(QApplication.translate("Table","Kind",None))
+            self.energy_ui.datatable.verticalHeader().setSectionResizeMode(2)
+            # Loads tab
+            self.energy_ui.loadsSetDefaultsButton.setText(QApplication.translate("Button","Set as Defaults",None))
+            self.energy_ui.loadsDefaultsButtons.setText(QApplication.translate("Button","Restore Defaults",None))
+            self.energy_ui.loadlabelsLabel.setText(QApplication.translate("Label","Label",None))
+            self.energy_ui.loadratingsLabel.setText(QApplication.translate("Label","Rating",None))
+            self.energy_ui.ratingunitsLabel.setText(QApplication.translate("Label","Unit",None))
+            self.energy_ui.sourcetypesLabel.setText(QApplication.translate("Label","Source",None))
+            self.energy_ui.eventsLabel.setText(QApplication.translate("Label","Event",None))
+            self.energy_ui.pressureLabel.setText(QApplication.translate("Label","Pressure %",None))
+            self.energy_ui.electricEnergyMixLabel.setText(QApplication.translate("Label","Electric Energy Mix:",None))
+            self.energy_ui.renewableLabel.setText(QApplication.translate("Label","Renewable",None))
+            # Protocol tab
+            self.energy_ui.protocolSetDefaultsButton.setText(QApplication.translate("Button","Set as Defaults",None))
+            self.energy_ui.protocolDefaultsButton.setText(QApplication.translate("Button","Restore Defaults",None))
+            self.energy_ui.preheatingLabel.setText(QApplication.translate("Label","Pre-Heating",None))
+            self.energy_ui.betweenBatchesLabel.setText(QApplication.translate("Label","Between Batches",None))
+            self.energy_ui.coolingLabel.setText(QApplication.translate("Label","Cooling",None))
+            self.energy_ui.BBPafterPreHeatcheckBox.setText(QApplication.translate("Label","Between Batches after Pre-Heating",None))
+            self.energy_ui.loadALabel.setText(self.formatLoadLabel("A"))
+            self.energy_ui.loadBLabel.setText(self.formatLoadLabel("B"))
+            self.energy_ui.loadCLabel.setText(self.formatLoadLabel("C"))
+            self.energy_ui.loadDLabel.setText(self.formatLoadLabel("D"))
+            self.energy_ui.timeUnitLabel.setText(QApplication.translate("Label","(mm:ss)",None))
+            self.energy_ui.loadAUnitLabel.setText("(BTU)")
+            self.energy_ui.loadBUnitLabel.setText("(BTU)")
+            self.energy_ui.loadCUnitLabel.setText("(BTU)")
+            self.energy_ui.loadDUnitLabel.setText("(BTU)")
+            self.energy_ui.durationLabel.setText(QApplication.translate("Label","Duration",None))
+            self.energy_ui.measuredEnergyLabel.setText(QApplication.translate("Label","Measured Energy or Output %",None))
+            
+            # choose the unit to show results
+            self.energy_ui.resultunitComboBox.addItems(self.aw.qmc.energyunits)
+            
+            #
+            self.energy_ui.sourcetype0.addItems(self.aw.qmc.sourcenames)
+            self.energy_ui.sourcetype1.addItems(self.aw.qmc.sourcenames)
+            self.energy_ui.sourcetype2.addItems(self.aw.qmc.sourcenames)
+            self.energy_ui.sourcetype3.addItems(self.aw.qmc.sourcenames)
+            #
+            etypes = [""] + self.aw.qmc.etypes[:4]
+            self.energy_ui.events0.addItems(etypes)
+            self.energy_ui.events1.addItems(etypes)
+            self.energy_ui.events2.addItems(etypes)
+            self.energy_ui.events3.addItems(etypes)
+            #
+            self.energy_ui.ratingunit0.addItems(self.aw.qmc.powerunits)
+            self.energy_ui.ratingunit1.addItems(self.aw.qmc.powerunits)
+            self.energy_ui.ratingunit2.addItems(self.aw.qmc.powerunits)
+            self.energy_ui.ratingunit3.addItems(self.aw.qmc.powerunits)
+
+            # input validators
+            regextime = QRegularExpression(r"^[0-9]?[0-9]?[0-9]:[0-5][0-9]$")
+            self.energy_ui.preheatDuration.setValidator(QRegularExpressionValidator(regextime,self))
+            self.energy_ui.betweenBatchesDuration.setValidator(QRegularExpressionValidator(regextime,self))
+            self.energy_ui.coolingDuration.setValidator(QRegularExpressionValidator(regextime,self))
+            
+            # initialize
+            self.updateEnergyTab()
+        
+            # connect signals
+            self.energy_ui.tabWidget.currentChanged.connect(self.energyTabSwitched)
+            
+            self.energy_ui.copyTableButton.clicked.connect(self.copyEnergyDataTabletoClipboard)
+        
+            self.energy_ui.loadlabel0.editingFinished.connect(self.loadlabels_editingfinished)
+            self.energy_ui.loadlabel1.editingFinished.connect(self.loadlabels_editingfinished)
+            self.energy_ui.loadlabel2.editingFinished.connect(self.loadlabels_editingfinished)
+            self.energy_ui.loadlabel3.editingFinished.connect(self.loadlabels_editingfinished)
+
+            self.energy_ui.loadrating0.editingFinished.connect(self.loadratings_editingfinished)
+            self.energy_ui.loadrating1.editingFinished.connect(self.loadratings_editingfinished)
+            self.energy_ui.loadrating2.editingFinished.connect(self.loadratings_editingfinished)
+            self.energy_ui.loadrating3.editingFinished.connect(self.loadratings_editingfinished)
+
+            self.energy_ui.ratingunit0.currentIndexChanged.connect(self.ratingunits_currentindexchanged)
+            self.energy_ui.ratingunit1.currentIndexChanged.connect(self.ratingunits_currentindexchanged)
+            self.energy_ui.ratingunit2.currentIndexChanged.connect(self.ratingunits_currentindexchanged)
+            self.energy_ui.ratingunit3.currentIndexChanged.connect(self.ratingunits_currentindexchanged)
+            
+            self.energy_ui.sourcetype0.currentIndexChanged.connect(self.sourcetypes_currentindexchanged)
+            self.energy_ui.sourcetype1.currentIndexChanged.connect(self.sourcetypes_currentindexchanged)
+            self.energy_ui.sourcetype2.currentIndexChanged.connect(self.sourcetypes_currentindexchanged)
+            self.energy_ui.sourcetype3.currentIndexChanged.connect(self.sourcetypes_currentindexchanged)
+
+            self.energy_ui.events0.currentIndexChanged.connect(self.load_etypes_currentindexchanged)
+            self.energy_ui.events1.currentIndexChanged.connect(self.load_etypes_currentindexchanged)
+            self.energy_ui.events2.currentIndexChanged.connect(self.load_etypes_currentindexchanged)
+            self.energy_ui.events3.currentIndexChanged.connect(self.load_etypes_currentindexchanged)
+            
+            self.energy_ui.pressureCheckBox0.stateChanged.connect(self.pressureCheckBox_statechanged)
+            self.energy_ui.pressureCheckBox1.stateChanged.connect(self.pressureCheckBox_statechanged)
+            self.energy_ui.pressureCheckBox2.stateChanged.connect(self.pressureCheckBox_statechanged)
+            self.energy_ui.pressureCheckBox3.stateChanged.connect(self.pressureCheckBox_statechanged)
+            
+            self.energy_ui.zeropcts0.valueChanged.connect(self.loadevent_zeropcts0_valuechanged)
+            self.energy_ui.zeropcts1.valueChanged.connect(self.loadevent_zeropcts1_valuechanged)
+            self.energy_ui.zeropcts2.valueChanged.connect(self.loadevent_zeropcts2_valuechanged)
+            self.energy_ui.zeropcts3.valueChanged.connect(self.loadevent_zeropcts3_valuechanged)
+            
+            self.energy_ui.hundredpct0.valueChanged.connect(self.loadevent_hundpcts0_valuechanged)
+            self.energy_ui.hundredpct1.valueChanged.connect(self.loadevent_hundpcts1_valuechanged)
+            self.energy_ui.hundredpct2.valueChanged.connect(self.loadevent_hundpcts2_valuechanged)
+            self.energy_ui.hundredpct3.valueChanged.connect(self.loadevent_hundpcts3_valuechanged)
+
+            # Protocol
+            
+            self.energy_ui.preheatDuration.editingFinished.connect(self.preheatDuration_editingfinished)
+            self.energy_ui.betweenBatchesDuration.editingFinished.connect(self.betweenBatchesDuration_editingfinished)
+            self.energy_ui.coolingDuration.editingFinished.connect(self.coolingDuration_editingfinished)
+            
+            self.energy_ui.preheatenergies0.editingFinished.connect(self.preheatenergies_editingfinished)
+            self.energy_ui.preheatenergies1.editingFinished.connect(self.preheatenergies_editingfinished)
+            self.energy_ui.preheatenergies2.editingFinished.connect(self.preheatenergies_editingfinished)
+            self.energy_ui.preheatenergies3.editingFinished.connect(self.preheatenergies_editingfinished)
+            
+            self.energy_ui.betweenbatchesenergy0.editingFinished.connect(self.betweenbatchenergies_editingfinished)
+            self.energy_ui.betweenbatchesenergy1.editingFinished.connect(self.betweenbatchenergies_editingfinished)
+            self.energy_ui.betweenbatchesenergy2.editingFinished.connect(self.betweenbatchenergies_editingfinished)
+            self.energy_ui.betweenbatchesenergy3.editingFinished.connect(self.betweenbatchenergies_editingfinished)
+            
+            self.energy_ui.coolingenergies0.editingFinished.connect(self.coolingenergies_editingfinished)
+            self.energy_ui.coolingenergies1.editingFinished.connect(self.coolingenergies_editingfinished)
+            self.energy_ui.coolingenergies2.editingFinished.connect(self.coolingenergies_editingfinished)
+            self.energy_ui.coolingenergies3.editingFinished.connect(self.coolingenergies_editingfinished)
+            
+            self.energy_ui.BBPafterPreHeatcheckBox.stateChanged.connect(self.betweenbatch_after_preheat_statechanged)
+            
+            self.energy_ui.electricEnergyMixSpinBox.valueChanged.connect(self.electric_energy_mix_valuechanged)
+            
+            self.energy_ui.resultunitComboBox.currentIndexChanged.connect(self.energyresultunitComboBox_indexchanged)
+            #
+            self.energy_ui.loadsSetDefaultsButton.clicked.connect(self.setEnergyLoadDefaults)
+            self.energy_ui.loadsDefaultsButtons.clicked.connect(self.restoreEnergyLoadDefaults)
+            self.energy_ui.protocolSetDefaultsButton.clicked.connect(self.setEnergyProtocolDefaults)
+            self.energy_ui.protocolDefaultsButton.clicked.connect(self.restoreEnergyProtocolDefaults)
+
+            #
+            self.tabInitialized[4] = True
+        # we always set the batch position on tab switch as it might have been changed in the first tab of the Roast Properties dialog
+        self.energy_ui.roastbatchposLabel.setText("{} #{}".format(QApplication.translate("Label","Batch", None),self.aw.qmc.roastbatchpos))
+
+    def createEnergyDataTable(self):
+        self.updateEnergyConfig()
+        ndata = len(self.btu_list)
+        self.energy_ui.datatable.setSortingEnabled(False) # deactivate sorting while populating not to mess up things
+        self.energy_ui.datatable.setRowCount(0) # clears the table, but keeps the header intact
+        self.energy_ui.datatable.setRowCount(ndata)
+        
+        self.energy_ui.datatable.horizontalHeaderItem(2).setText(self.aw.qmc.energyunits[self.aw.qmc.energyresultunit_setup])
+
+        for i in range(ndata):
+            if self.btu_list[i]["Kind"] in [0, 2]:  #Preheat Measured, BBP Measured
+                load_widget = MyTableWidgetItemNumber("",self.btu_list[i]["load_pct"])
+            else:
+                load_widget = MyTableWidgetItemNumber("{:.1f}%".format(self.btu_list[i]["load_pct"]),self.btu_list[i]["load_pct"])
+            load_widget.setTextAlignment(Qt.AlignRight|Qt.AlignVCenter)
+            
+            if self.btu_list[i]["Kind"] in [0, 2]:  #Preheat Measured, BBP Measured
+                duration_mmss_widget = MyTableWidgetItemNumber("",0)
+            else:
+                duration_mmss_widget = MyTableWidgetItemNumber(stringfromseconds(self.btu_list[i]["duration"]),self.btu_list[i]["duration"])
+                duration_mmss_widget.setTextAlignment(Qt.AlignCenter|Qt.AlignVCenter)
+            
+            BTUs = self.aw.qmc.convertHeat(self.btu_list[i]["BTUs"],0,self.aw.qmc.energyresultunit_setup)
+            BTUs_widget = MyTableWidgetItemNumber(self.scalefloat(BTUs),BTUs)
+            BTUs_widget.setTextAlignment(Qt.AlignRight|Qt.AlignVCenter)
+            
+            CO2g = self.btu_list[i]["CO2g"]
+            CO2g_widget = MyTableWidgetItemNumber(self.scalefloat(CO2g),CO2g)
+            CO2g_widget.setTextAlignment(Qt.AlignRight|Qt.AlignVCenter)
+                        
+            Load_widget = QTableWidgetItem(self.btu_list[i]["LoadLabel"])
+            Load_widget.setTextAlignment(Qt.AlignLeft|Qt.AlignVCenter)
+            
+            SourceType_widget = MyTableWidgetItemNumber(self.aw.qmc.sourcenames[self.btu_list[i]["SourceType"]],self.btu_list[i]["SortOrder"])
+            SourceType_widget.setTextAlignment(Qt.AlignCenter|Qt.AlignVCenter)
+            
+            Kind_widget = MyTableWidgetItemNumber(self.aw.qmc.kind_list[self.btu_list[i]["Kind"]],self.btu_list[i]["SortOrder"])
+            Kind_widget.setTextAlignment(Qt.AlignLeft|Qt.AlignVCenter)
+            
+            self.energy_ui.datatable.setItem(i,0,load_widget)
+            self.energy_ui.datatable.setItem(i,1,duration_mmss_widget)
+            self.energy_ui.datatable.setItem(i,2,BTUs_widget)
+            self.energy_ui.datatable.setItem(i,3,CO2g_widget)
+            self.energy_ui.datatable.setItem(i,4,Load_widget)
+            self.energy_ui.datatable.setItem(i,5,SourceType_widget)
+            self.energy_ui.datatable.setItem(i,6,Kind_widget)
+ 
+        header = self.energy_ui.datatable.horizontalHeader()
+        header.setSectionResizeMode(QHeaderView.ResizeToContents)
+#        header.setSectionResizeMode(QHeaderView.Stretch)
+#        self.energy_ui.datatable.resizeColumnsToContents()
+        
+#        # remember the columnwidth
+#        for i in range(len(self.aw.qmc.energytablecolumnwidths)):
+#            try:
+#                w = self.aw.qmc.energytablecolumnwidths[i]
+#                if i == 6:
+#                    w = max(80,w)
+#                self.energy_ui.datatable.setColumnWidth(i,w)
+#            except:
+#                pass
+
+        self.energy_ui.datatable.setSortingEnabled(True)
+        self.energy_ui.datatable.sortItems(6)
+
+    # fills the energy tab widgets with the current energy config data
+    def updateEnergyTab(self):
+        self.energy_ui.resultunitComboBox.setCurrentIndex(self.aw.qmc.energyresultunit_setup)
+        ## Details tab
+        ## Loads tab
+        # label
+        self.energy_ui.loadlabel0.setText(self.aw.qmc.loadlabels[0])
+        self.energy_ui.loadlabel1.setText(self.aw.qmc.loadlabels[1])
+        self.energy_ui.loadlabel2.setText(self.aw.qmc.loadlabels[2])
+        self.energy_ui.loadlabel3.setText(self.aw.qmc.loadlabels[3])
+        # rating
+        self.energy_ui.loadrating0.setText(str(self.aw.qmc.loadratings[0]) if self.aw.qmc.loadratings[0] != 0 else "")
+        self.energy_ui.loadrating1.setText(str(self.aw.qmc.loadratings[1]) if self.aw.qmc.loadratings[1] != 0 else "")
+        self.energy_ui.loadrating2.setText(str(self.aw.qmc.loadratings[2]) if self.aw.qmc.loadratings[2] != 0 else "")
+        self.energy_ui.loadrating3.setText(str(self.aw.qmc.loadratings[3]) if self.aw.qmc.loadratings[3] != 0 else "")
+        # unit
+        self.energy_ui.ratingunit0.setCurrentIndex(self.aw.qmc.ratingunits[0])
+        self.energy_ui.ratingunit1.setCurrentIndex(self.aw.qmc.ratingunits[1])
+        self.energy_ui.ratingunit2.setCurrentIndex(self.aw.qmc.ratingunits[2])
+        self.energy_ui.ratingunit3.setCurrentIndex(self.aw.qmc.ratingunits[3])
+        # source
+        self.energy_ui.sourcetype0.setCurrentIndex(self.aw.qmc.sourcetypes[0])
+        self.energy_ui.sourcetype1.setCurrentIndex(self.aw.qmc.sourcetypes[1])
+        self.energy_ui.sourcetype2.setCurrentIndex(self.aw.qmc.sourcetypes[2])
+        self.energy_ui.sourcetype3.setCurrentIndex(self.aw.qmc.sourcetypes[3])
+        # event
+        self.energy_ui.events0.setCurrentIndex(self.aw.qmc.load_etypes[0])
+        self.energy_ui.events1.setCurrentIndex(self.aw.qmc.load_etypes[1])
+        self.energy_ui.events2.setCurrentIndex(self.aw.qmc.load_etypes[2])
+        self.energy_ui.events3.setCurrentIndex(self.aw.qmc.load_etypes[3])
+        # pressure percent
+        self.energy_ui.pressureCheckBox0.setChecked(self.aw.qmc.presssure_percents[0])
+        self.energy_ui.pressureCheckBox1.setChecked(self.aw.qmc.presssure_percents[1])
+        self.energy_ui.pressureCheckBox2.setChecked(self.aw.qmc.presssure_percents[2])
+        self.energy_ui.pressureCheckBox3.setChecked(self.aw.qmc.presssure_percents[3])
+        # zeropcts
+        self.energy_ui.zeropcts0.setValue(self.aw.qmc.loadevent_zeropcts[0])
+        self.energy_ui.zeropcts1.setValue(self.aw.qmc.loadevent_zeropcts[1])
+        self.energy_ui.zeropcts2.setValue(self.aw.qmc.loadevent_zeropcts[2])
+        self.energy_ui.zeropcts3.setValue(self.aw.qmc.loadevent_zeropcts[3])
+        # hundpcts
+        self.energy_ui.hundredpct0.setValue(self.aw.qmc.loadevent_hundpcts[0])
+        self.energy_ui.hundredpct1.setValue(self.aw.qmc.loadevent_hundpcts[1])
+        self.energy_ui.hundredpct2.setValue(self.aw.qmc.loadevent_hundpcts[2])
+        self.energy_ui.hundredpct3.setValue(self.aw.qmc.loadevent_hundpcts[3])
+        ## Protocol tab
+        self.energy_ui.preheatDuration.setText(self.validateSeconds2Text(self.aw.qmc.preheatDuration))
+        self.energy_ui.betweenBatchesDuration.setText(self.validateSeconds2Text(self.aw.qmc.betweenbatchDuration))
+        self.energy_ui.coolingDuration.setText(self.validateSeconds2Text(self.aw.qmc.coolingDuration))
+        self.energy_ui.preheatenergies0.setText(self.validatePctText(str(self.aw.qmc.preheatenergies[0])))
+        self.energy_ui.preheatenergies1.setText(self.validatePctText(str(self.aw.qmc.preheatenergies[1])))
+        self.energy_ui.preheatenergies2.setText(self.validatePctText(str(self.aw.qmc.preheatenergies[2])))
+        self.energy_ui.preheatenergies3.setText(self.validatePctText(str(self.aw.qmc.preheatenergies[3])))
+        self.energy_ui.betweenbatchesenergy0.setText(self.validatePctText(str(self.aw.qmc.betweenbatchenergies[0])))
+        self.energy_ui.betweenbatchesenergy1.setText(self.validatePctText(str(self.aw.qmc.betweenbatchenergies[1])))
+        self.energy_ui.betweenbatchesenergy2.setText(self.validatePctText(str(self.aw.qmc.betweenbatchenergies[2])))
+        self.energy_ui.betweenbatchesenergy3.setText(self.validatePctText(str(self.aw.qmc.betweenbatchenergies[3])))
+        self.energy_ui.coolingenergies0.setText(self.validatePctText(str(self.aw.qmc.coolingenergies[0])))
+        self.energy_ui.coolingenergies1.setText(self.validatePctText(str(self.aw.qmc.coolingenergies[1])))
+        self.energy_ui.coolingenergies2.setText(self.validatePctText(str(self.aw.qmc.coolingenergies[2])))
+        self.energy_ui.coolingenergies3.setText(self.validatePctText(str(self.aw.qmc.coolingenergies[3])))
+        self.energy_ui.BBPafterPreHeatcheckBox.setChecked(self.aw.qmc.betweenbatch_after_preheat)
+        self.energy_ui.electricEnergyMixSpinBox.setValue(self.aw.qmc.electricEnergyMix)
+        #
+        self.updateEnergyLabels()
+        self.updateEnergyUnitLabels()
+        self.updateEnableZHpct()
+        self.createEnergyDataTable()
+    
+    def updateLoadLabels(self, updateMetrics=True):
+        self.aw.qmc.loadlabels[0] = self.energy_ui.loadlabel0.text()
+        self.aw.qmc.loadlabels[1] = self.energy_ui.loadlabel1.text()
+        self.aw.qmc.loadlabels[2] = self.energy_ui.loadlabel2.text()
+        self.aw.qmc.loadlabels[3] = self.energy_ui.loadlabel3.text()
+        if updateMetrics:
+            self.updateMetricsLabel()
+        self.updateEnergyLabels()
+    
+    def updateLoadRatings(self, updateMetrics=True):
+        self.aw.qmc.loadratings[0] = (self.aw.float2float(self.energy_ui.loadrating0.text()) if len(self.energy_ui.loadrating0.text())>0 else 0)
+        self.aw.qmc.loadratings[1] = (self.aw.float2float(self.energy_ui.loadrating1.text()) if len(self.energy_ui.loadrating1.text())>0 else 0)
+        self.aw.qmc.loadratings[2] = (self.aw.float2float(self.energy_ui.loadrating2.text()) if len(self.energy_ui.loadrating2.text())>0 else 0)
+        self.aw.qmc.loadratings[3] = (self.aw.float2float(self.energy_ui.loadrating3.text()) if len(self.energy_ui.loadrating3.text())>0 else 0)
+        if updateMetrics:
+            self.updateMetricsLabel()
+    
+    def updateLoadUnits(self, updateMetrics=True):
+        self.aw.qmc.ratingunits[0] = self.energy_ui.ratingunit0.currentIndex()
+        self.aw.qmc.ratingunits[1] = self.energy_ui.ratingunit1.currentIndex()
+        self.aw.qmc.ratingunits[2] = self.energy_ui.ratingunit2.currentIndex()
+        self.aw.qmc.ratingunits[3] = self.energy_ui.ratingunit3.currentIndex()
+        if updateMetrics:
+            self.updateMetricsLabel()
+    
+    def updateSourceTypes(self, updateMetrics=True):
+        self.aw.qmc.sourcetypes[0] = self.energy_ui.sourcetype0.currentIndex()
+        self.aw.qmc.sourcetypes[1] = self.energy_ui.sourcetype1.currentIndex()
+        self.aw.qmc.sourcetypes[2] = self.energy_ui.sourcetype2.currentIndex()
+        self.aw.qmc.sourcetypes[3] = self.energy_ui.sourcetype3.currentIndex()
+        if updateMetrics:
+            self.updateMetricsLabel()
+    
+    def updateLoadEvents(self, updateMetrics=True):
+        self.aw.qmc.load_etypes[0] = self.energy_ui.events0.currentIndex()
+        self.aw.qmc.load_etypes[1] = self.energy_ui.events1.currentIndex()
+        self.aw.qmc.load_etypes[2] = self.energy_ui.events2.currentIndex()
+        self.aw.qmc.load_etypes[3] = self.energy_ui.events3.currentIndex()
+        if updateMetrics:
+            self.updateMetricsLabel()
+    
+    def updatePressurePercent(self, updateMetrics=True):
+        self.aw.qmc.presssure_percents[0] = self.energy_ui.pressureCheckBox0.isChecked()
+        self.aw.qmc.presssure_percents[1] = self.energy_ui.pressureCheckBox1.isChecked()
+        self.aw.qmc.presssure_percents[2] = self.energy_ui.pressureCheckBox2.isChecked()
+        self.aw.qmc.presssure_percents[3] = self.energy_ui.pressureCheckBox3.isChecked()
+        if updateMetrics:
+            self.updateMetricsLabel()
+    
+    def updateLoadPcts(self, updateMetrics=True):
+        # zeropcts
+        self.aw.qmc.loadevent_zeropcts[0] = self.energy_ui.zeropcts0.value()
+        self.aw.qmc.loadevent_zeropcts[1] = self.energy_ui.zeropcts1.value()
+        self.aw.qmc.loadevent_zeropcts[2] = self.energy_ui.zeropcts2.value()
+        self.aw.qmc.loadevent_zeropcts[3] = self.energy_ui.zeropcts3.value()
+        # hundpcts
+        self.aw.qmc.loadevent_hundpcts[0] = self.energy_ui.hundredpct0.value()
+        self.aw.qmc.loadevent_hundpcts[1] = self.energy_ui.hundredpct1.value()
+        self.aw.qmc.loadevent_hundpcts[2] = self.energy_ui.hundredpct2.value()
+        self.aw.qmc.loadevent_hundpcts[3] = self.energy_ui.hundredpct3.value()
+        if updateMetrics:
+            self.updateMetricsLabel()
+    
+    def updatePreheatDuration(self, updateMetrics=True):
+        self.aw.qmc.preheatDuration = self.validateText2Seconds(self.energy_ui.preheatDuration.text())
+        if updateMetrics:
+            self.updateMetricsLabel()
+        
+    def updateBetweenBatchessDuration(self, updateMetrics=True):
+        self.aw.qmc.betweenbatchDuration = self.validateText2Seconds(self.energy_ui.betweenBatchesDuration.text())
+        if updateMetrics:
+            self.updateMetricsLabel()
+        
+    def updateCoolingDuration(self, updateMetrics=True):
+        self.aw.qmc.coolingDuration = self.validateText2Seconds(self.energy_ui.coolingDuration.text())
+        if updateMetrics:
+            self.updateMetricsLabel()
+    
+    def updatePreheatEnergies(self, updateMetrics=True):
+        self.aw.qmc.preheatenergies[0] = self.pctText2Num(self.energy_ui.preheatenergies0.text())
+        self.aw.qmc.preheatenergies[1] = self.pctText2Num(self.energy_ui.preheatenergies1.text())
+        self.aw.qmc.preheatenergies[2] = self.pctText2Num(self.energy_ui.preheatenergies2.text())
+        self.aw.qmc.preheatenergies[3] = self.pctText2Num(self.energy_ui.preheatenergies3.text())
+        if updateMetrics:
+            self.updateMetricsLabel()
+    
+    def updateBetweenBatchesEnergies(self, updateMetrics=True):
+        self.aw.qmc.betweenbatchenergies[0] = self.pctText2Num(self.energy_ui.betweenbatchesenergy0.text())
+        self.aw.qmc.betweenbatchenergies[1] = self.pctText2Num(self.energy_ui.betweenbatchesenergy1.text())
+        self.aw.qmc.betweenbatchenergies[2] = self.pctText2Num(self.energy_ui.betweenbatchesenergy2.text())
+        self.aw.qmc.betweenbatchenergies[3] = self.pctText2Num(self.energy_ui.betweenbatchesenergy3.text())
+        if updateMetrics:
+            self.updateMetricsLabel()
+    
+    def updateCoolingEnergies(self, updateMetrics=True):
+        self.aw.qmc.coolingenergies[0] = self.pctText2Num(self.energy_ui.coolingenergies0.text())
+        self.aw.qmc.coolingenergies[1] = self.pctText2Num(self.energy_ui.coolingenergies1.text())
+        self.aw.qmc.coolingenergies[2] = self.pctText2Num(self.energy_ui.coolingenergies2.text())
+        self.aw.qmc.coolingenergies[3] = self.pctText2Num(self.energy_ui.coolingenergies3.text())
+        if updateMetrics:
+            self.updateMetricsLabel()
+    
+    def updateBBPafterPreHeat(self):
+        self.aw.qmc.betweenbatch_after_preheat = self.energy_ui.BBPafterPreHeatcheckBox.isChecked()
+        self.updateMetricsLabel()
+        
+    def updateElectricEnergyMix(self):
+        self.aw.qmc.electricEnergyMix = self.energy_ui.electricEnergyMixSpinBox.value()
+        self.updateMetricsLabel()
+        
+    # fills the energy config data from the current energy tab widget values
+    def updateEnergyConfig(self):
+        if self.tabInitialized[4]:
+            self.aw.qmc.energyresultunit_setup = self.energy_ui.resultunitComboBox.currentIndex()
+            ## Details tab
+            ## Loads tab
+            # label
+            self.updateLoadLabels(False)
+            # rating
+            self.updateLoadRatings(False)
+            # unit
+            self.updateLoadUnits(False)
+            # source
+            self.updateSourceTypes(False)
+            # pressure percent
+            self.updatePressurePercent(False)
+            # event
+            self.updateLoadEvents(False)
+            # zeropcts & hundpcts
+            self.updateLoadPcts(False)
+            ## Protocol tab
+            self.updatePreheatDuration(False)
+            self.updateBetweenBatchessDuration(False)
+            self.updateCoolingDuration(False)
+            self.updatePreheatEnergies(False)
+            self.updateBetweenBatchesEnergies(False)
+            #
+            self.updateMetricsLabel()
+
+    def restoreAllEnergySettings(self):
+        if self.tabInitialized[4]:
+            self.aw.qmc.loadlabels = self.org_loadlabels.copy()
+            self.aw.qmc.loadratings = self.org_loadratings.copy()
+            self.aw.qmc.ratingunits = self.org_ratingunits.copy()
+            self.aw.qmc.sourcetypes = self.org_sourcetypes.copy()
+            self.aw.qmc.load_etypes = self.org_load_etypes.copy()
+            self.aw.qmc.presssure_percents = self.org_presssure_percents.copy()
+            self.aw.qmc.loadevent_zeropcts = self.org_loadevent_zeropcts.copy()
+            self.aw.qmc.loadevent_hundpcts = self.org_loadevent_hundpcts.copy()
+            self.aw.qmc.preheatDuration = self.org_preheatDuration
+            self.aw.qmc.preheatenergies = self.org_preheatenergies.copy()
+            self.aw.qmc.betweenbatchDuration = self.org_betweenbatchDuration
+            self.aw.qmc.betweenbatchenergies = self.org_betweenbatchenergies.copy()
+            self.aw.qmc.coolinghDuration = self.org_coolingDuration
+            self.aw.qmc.coolingenergies = self.org_coolingenergies.copy()
+            self.aw.qmc.betweenbatch_after_preheat = self.org_betweenbatch_after_preheat
+            self.aw.qmc.electricEnergyMix = self.org_electricEnergyMix
+
+    def updateMetricsLabel(self):
+        try:
+            metrics,self.btu_list = self.aw.qmc.calcEnergyuse(self.weightinedit.text())
+            if len(metrics) > 0 and metrics["BTU_batch"] > 0:
+                energy_unit = self.aw.qmc.energyunits[self.aw.qmc.energyresultunit_setup]
+                total_energy = self.scalefloat(self.aw.qmc.convertHeat(metrics["BTU_batch"],0,self.aw.qmc.energyresultunit_setup))
+                self.energy_ui.totalEnergyLabel.setText("{} {}".format(total_energy,energy_unit))
+                preheat_energy = self.scalefloat(self.aw.qmc.convertHeat(metrics["BTU_preheat"],0,self.aw.qmc.energyresultunit_setup))
+                self.energy_ui.preheatEnergyLabel.setText("{} {} ({})".format(preheat_energy,energy_unit,QApplication.translate("Label","Preheat",None)))
+                BBP_energy = self.scalefloat(self.aw.qmc.convertHeat(metrics["BTU_bbp"],0,self.aw.qmc.energyresultunit_setup))
+                self.energy_ui.BBPEnergyLabel.setText("{} {} ({})".format(BBP_energy,energy_unit,QApplication.translate("Label","BBP",None)))
+                roast_energy = self.scalefloat(self.aw.qmc.convertHeat(metrics["BTU_roast"],0,self.aw.qmc.energyresultunit_setup))
+                self.energy_ui.roastEnergyLabel.setText("{} {} ({})".format(roast_energy,energy_unit,QApplication.translate("Label","Roast",None)))
+                #
+                if metrics["CO2_batch"] >= 0:
+                    scaled_co2_batch = str(self.scalefloat(metrics["CO2_batch"]))+'g' if metrics["CO2_batch"]<1000 else str(self.scalefloat(metrics["CO2_batch"]/1000.)) +'kg'
+                    self.energy_ui.totalCO2Label.setText(scaled_co2_batch)
+#                    scaled_co2_preheat = str(metrics["CO2_preheat"])+'g' if metrics["CO2_preheat"]<1000 else str(self.aw.float2float(metrics["CO2_preheat"]/1000.,1)) +'kg'
+#                    scaled_co2_bbp = str(metrics["CO2_bbp"])+'g' if metrics["CO2_bbp"]<1000 else str(self.aw.float2float(metrics["CO2_bbp"]/1000.,1)) +'kg'
+#                    scaled_co2_roast = str(metrics["CO2_roast"])+'g' if metrics["CO2_roast"]<1000 else str(self.aw.float2float(metrics["CO2_roast"]/1000.,1)) +'kg'
+#                    self.energy_ui.CO2perKgCoffeeLabel.setText("")
+                    
+                    # a green weight is available
+                    if metrics["CO2_per_green_kg"] > 0:
+                        if metrics["CO2_per_green_kg"] < 1000:
+                            scaled_co2_kg = str(self.scalefloat(metrics["CO2_per_green_kg"])) + 'g'
+                        else:
+                            scaled_co2_kg = str(self.scalefloat(metrics["CO2_per_green_kg"]/1000.)) + 'kg'
+                        self.energy_ui.CO2perKgCoffeeLabel.setText("{0} {1}".format(scaled_co2_kg, QApplication.translate("Label","CO2 per kg green coffee",None)))
+                    # no weight is available
+                    else:
+                        self.energy_ui.CO2perKgCoffeeLabel.setText("")
+
+            else:
+                # clear result widgets
+                self.energy_ui.totalEnergyLabel.setText("")
+                self.energy_ui.preheatEnergyLabel.setText("")
+                self.energy_ui.BBPEnergyLabel.setText("")
+                self.energy_ui.roastEnergyLabel.setText("")
+                self.energy_ui.totalCO2Label.setText("")
+                self.energy_ui.CO2perKgCoffeeLabel.setText("")
+        
+        except Exception as e:
+            _, _, exc_tb = sys.exc_info()
+            self.aw.qmc.adderror((QApplication.translate("Error Message","Exception:",None) + " updateMetricsLabel() {0}").format(str(e)),exc_tb.tb_lineno)
+
+    def formatLoadLabel(self,tag,label=""):
+        if len(label) > 0:
+            return label
+        else:
+            return "{} {}".format(QApplication.translate("Label","Load",None),tag)
+    
+    def formatLoadUnitLabel(self,unit):
+        return "({})".format(self.aw.qmc.energyunits[unit])
+    
+    def updateEnergyLabels(self):
+        self.energy_ui.loadALabel.setText(self.formatLoadLabel("A",self.aw.qmc.loadlabels[0]))
+        self.energy_ui.loadBLabel.setText(self.formatLoadLabel("B",self.aw.qmc.loadlabels[1]))
+        self.energy_ui.loadCLabel.setText(self.formatLoadLabel("C",self.aw.qmc.loadlabels[2]))
+        self.energy_ui.loadDLabel.setText(self.formatLoadLabel("D",self.aw.qmc.loadlabels[3]))
+        
+    def updateEnergyUnitLabels(self):
+        self.energy_ui.loadAUnitLabel.setText(self.formatLoadUnitLabel(self.energy_ui.ratingunit0.currentIndex()))
+        self.energy_ui.loadBUnitLabel.setText(self.formatLoadUnitLabel(self.energy_ui.ratingunit1.currentIndex()))
+        self.energy_ui.loadCUnitLabel.setText(self.formatLoadUnitLabel(self.energy_ui.ratingunit2.currentIndex()))
+        self.energy_ui.loadDUnitLabel.setText(self.formatLoadUnitLabel(self.energy_ui.ratingunit3.currentIndex()))
+
+    def updateEnableZHpct(self):
+        for ew,zw in [
+            (self.energy_ui.events0,self.energy_ui.zeropcts0),
+            (self.energy_ui.events1,self.energy_ui.zeropcts1),
+            (self.energy_ui.events2,self.energy_ui.zeropcts2),
+            (self.energy_ui.events3,self.energy_ui.zeropcts3),
+            ]:
+            if ew.currentIndex() == 0:
+                zw.setEnabled(False)
+            else:
+                zw.setEnabled(True)
+        self.updateMetricsLabel()
+
+    ##
+
+    @pyqtSlot(bool)
+    def setEnergyLoadDefaults(self,_=False):
+        # ensure that the data from the focused widget gets set
+        focusWidget = QApplication.focusWidget()
+        if focusWidget:
+            focusWidget.clearFocus()
+        self.aw.qmc.setEnergyLoadDefaults()
+        
+    @pyqtSlot(bool)
+    def restoreEnergyLoadDefaults(self,_=False):
+        self.aw.qmc.restoreEnergyLoadDefaults()
+        self.updateEnergyTab()
+        
+    @pyqtSlot(bool)
+    def setEnergyProtocolDefaults(self,_=False):
+        # ensure that the data from the focused widget gets set
+        focusWidget = QApplication.focusWidget()
+        if focusWidget:
+            focusWidget.clearFocus()
+        self.aw.qmc.setEnergyProtocolDefaults()
+        
+    @pyqtSlot(bool)
+    def restoreEnergyProtocolDefaults(self,_=False):
+        self.aw.qmc.restoreEnergyProtocolDefaults()
+        self.updateEnergyTab()
+
+    @pyqtSlot(bool)
+    def copyEnergyDataTabletoClipboard(self,_=False):
+        nrows = self.energy_ui.datatable.rowCount()
+        ncols = self.energy_ui.datatable.columnCount()
+        clipboard = ""
+        modifiers = QApplication.keyboardModifiers()
+        if modifiers == Qt.AltModifier:  #alt click
+            tbl = prettytable.PrettyTable()
+            fields = []
+            for c in range(ncols):
+                fields.append(self.energy_ui.datatable.horizontalHeaderItem(c).text())
+            tbl.field_names = fields
+            for i in range(nrows):
+                rows = []
+                rows.append(self.energy_ui.datatable.item(i,0).text())
+                rows.append(self.energy_ui.datatable.item(i,1).text())
+                rows.append(self.energy_ui.datatable.item(i,2).text())
+                rows.append(self.energy_ui.datatable.item(i,3).text())
+                rows.append(self.energy_ui.datatable.item(i,4).text())
+                rows.append(self.energy_ui.datatable.item(i,5).text())
+                rows.append(self.energy_ui.datatable.item(i,6).text())
+                tbl.add_row(rows)
+            clipboard = tbl.get_string()
+        else:
+            for c in range(ncols):
+                clipboard += self.energy_ui.datatable.horizontalHeaderItem(c).text()
+                if c != (ncols-1):
+                    clipboard += '\t'
+            clipboard += '\n'
+            for r in range(nrows):
+                clipboard += self.energy_ui.datatable.item(r,0).text() + "\t"
+                clipboard += self.energy_ui.datatable.item(r,1).text() + "\t"
+                clipboard += self.energy_ui.datatable.item(r,2).text() + "\t"
+                clipboard += self.energy_ui.datatable.item(r,3).text() + "\t"
+                clipboard += self.energy_ui.datatable.item(r,4).text() + "\t"
+                clipboard += self.energy_ui.datatable.item(r,5).text() + "\t"
+                clipboard += self.energy_ui.datatable.item(r,6).text() + "\n"
+        # copy to the system clipboard
+        sys_clip = QApplication.clipboard()
+        sys_clip.setText(clipboard)
+        self.aw.sendmessage(QApplication.translate("Message","Data table copied to clipboard",None))
+
+    ##
+    
+    @pyqtSlot()
+    def loadlabels_editingfinished(self):
+        for w in [self.energy_ui.loadlabel0,self.energy_ui.loadlabel1,self.energy_ui.loadlabel2,self.energy_ui.loadlabel3]:
+            if w.isModified():
+                w.setText(w.text().strip())
+        self.updateLoadLabels()
+
+    @pyqtSlot()
+    def loadratings_editingfinished(self):
+        for w in [self.energy_ui.loadrating0,self.energy_ui.loadrating1,self.energy_ui.loadrating2,self.energy_ui.loadrating3]:
+            if w.isModified():
+                w.setText(self.validateNumText(w.text()))
+        self.updateLoadRatings()
+        self.updateEnergyLabels()
+
+    @pyqtSlot()
+    def ratingunits_currentindexchanged(self):
+        self.updateLoadUnits()
+        self.updateEnergyUnitLabels()
+
+    @pyqtSlot()
+    def sourcetypes_currentindexchanged(self):
+        self.updateSourceTypes()
+
+    @pyqtSlot()
+    def load_etypes_currentindexchanged(self):
+        self.updateEnableZHpct()
+        self.updateLoadEvents()
+
+    @pyqtSlot(int)
+    def pressureCheckBox_statechanged(self,_):
+        self.updatePressurePercent()
+    
+    @pyqtSlot()
+    def loadevent_zeropcts0_valuechanged(self):
+        self.loadevent_pcts_valuechanged("zero",self.energy_ui.zeropcts0,self.energy_ui.hundredpct0)
+
+    @pyqtSlot()
+    def loadevent_zeropcts1_valuechanged(self):
+        self.loadevent_pcts_valuechanged("zero",self.energy_ui.zeropcts1,self.energy_ui.hundredpct1)
+
+    @pyqtSlot()
+    def loadevent_zeropcts2_valuechanged(self):
+        self.loadevent_pcts_valuechanged("zero",self.energy_ui.zeropcts2,self.energy_ui.hundredpct2)
+
+    @pyqtSlot()
+    def loadevent_zeropcts3_valuechanged(self):
+        self.loadevent_pcts_valuechanged("zero",self.energy_ui.zeropcts3,self.energy_ui.hundredpct3)
+
+    @pyqtSlot()
+    def loadevent_hundpcts0_valuechanged(self):
+        self.loadevent_pcts_valuechanged("hund",self.energy_ui.zeropcts0,self.energy_ui.hundredpct0)
+
+    @pyqtSlot()
+    def loadevent_hundpcts1_valuechanged(self):
+        self.loadevent_pcts_valuechanged("hund",self.energy_ui.zeropcts1,self.energy_ui.hundredpct1)
+
+    @pyqtSlot()
+    def loadevent_hundpcts2_valuechanged(self):
+        self.loadevent_pcts_valuechanged("hund",self.energy_ui.zeropcts2,self.energy_ui.hundredpct2)
+
+    @pyqtSlot()
+    def loadevent_hundpcts3_valuechanged(self):
+        self.loadevent_pcts_valuechanged("hund",self.energy_ui.zeropcts3,self.energy_ui.hundredpct3)
+    
+    def loadevent_pcts_valuechanged(self,field,zeropcts,hundpcts):
+        if zeropcts.value() >= hundpcts.value():
+            self.aw.sendmessage(QApplication.translate("Dialog","The 0% value must be less than the 100% value.",None))
+            QApplication.beep()
+            if field == "zero":
+                zeropcts.setValue(hundpcts.value()-1)
+            else:
+                hundpcts.setValue(zeropcts.value()+1)
+        self.updateLoadPcts()
+    
+    @pyqtSlot()
+    def preheatDuration_editingfinished(self):
+        self.updatePreheatDuration()
+
+    @pyqtSlot()
+    def betweenBatchesDuration_editingfinished(self):
+        self.updateBetweenBatchessDuration()
+
+    @pyqtSlot()
+    def coolingDuration_editingfinished(self):
+        self.updateCoolingDuration()
+
+    @pyqtSlot()
+    def preheatenergies_editingfinished(self):
+        for w in [self.energy_ui.preheatenergies0,
+                    self.energy_ui.preheatenergies1,
+                    self.energy_ui.preheatenergies2,
+                    self.energy_ui.preheatenergies3]:
+            if w.isModified():
+                w.setText(self.validatePctText(w.text()))
+        self.updatePreheatEnergies()
+
+    @pyqtSlot()
+    def betweenbatchenergies_editingfinished(self):
+        for w in [self.energy_ui.betweenbatchesenergy0,
+                    self.energy_ui.betweenbatchesenergy1,
+                    self.energy_ui.betweenbatchesenergy2,
+                    self.energy_ui.betweenbatchesenergy3]:
+            if w.isModified():
+                w.setText(self.validatePctText(w.text()))
+        self.updateBetweenBatchesEnergies()
+
+    @pyqtSlot()
+    def coolingenergies_editingfinished(self):
+        for w in [self.energy_ui.coolingenergies0,
+                    self.energy_ui.coolingenergies1,
+                    self.energy_ui.coolingenergies2,
+                    self.energy_ui.coolingenergies3]:
+            if w.isModified():
+                w.setText(self.validatePctText(w.text()))
+        self.updateCoolingEnergies()
+
+    @pyqtSlot(int)
+    def betweenbatch_after_preheat_statechanged(self,_):
+        self.updateBBPafterPreHeat()
+    
+    @pyqtSlot()
+    def electric_energy_mix_valuechanged(self):
+        self.updateElectricEnergyMix()
+
+    @pyqtSlot()
+    def energyresultunitComboBox_indexchanged(self):
+        self.aw.qmc.energyresultunit_setup = self.energy_ui.resultunitComboBox.currentIndex()
+        self.updateMetricsLabel()
+        if self.energy_ui.tabWidget.currentIndex() == 0:  # Detail (datatable) tab
+            self.createEnergyDataTable()
+    
+    @pyqtSlot(int)
+    def energyTabSwitched(self,i):
+        # ensure that the data from the focused widget gets set
+        focusWidget = QApplication.focusWidget()
+        if focusWidget:
+            focusWidget.clearFocus()
+        if i == 0:
+            self.createEnergyDataTable()
+        elif self.tabInitialized[4]:
+            # save column widths
+            self.aw.qmc.energytablecolumnwidths = [self.energy_ui.datatable.columnWidth(c) for c in range(self.energy_ui.datatable.columnCount())]
+        
+    ######
+
+    def scalefloat(self,num):
+        n = toFloat(num)
+        if n == 0:
+            res = "0"
+        elif n < 1:
+            res = "{:.3f}".format(n)
+        elif n >= 1000:
+            res = "{:.0f}".format(n)
+        elif n >= 100:
+            res = "{:.1f}".format(n)
+        else:
+            res = "{:.2f}".format(n)
+        return res
+
+    def validateText2Seconds(self,s):
+        if len(s) > 0:
+            res = stringtoseconds(s)
+        else:
+            res = 0
+        return res
+
+    def validateSeconds2Text(self,seconds):
+        if seconds > 0:
+            res = stringfromseconds(seconds)
+        else:
+            res = ''
+        return res
+    
+    def validateNumText(self,s):
+        res = ""
+        try:
+            r = abs(self.aw.float2float(toFloat((self.aw.comma2dot(str(s))))))
+            if not r == 0:
+                res = str(r)
+        except Exception:
+            pass
+        return res
+
+    def validatePctText(self,s):
+        res = ""
+        try:
+            if s == s.strip('%'):
+                f = self.aw.float2float(toFloat(self.aw.comma2dot(str(s))),2)
+                if f <= 1.0 and f > 0.0:
+                    res = str(int(f*1000./10)) + '%'  # using 1000/10 to get around Pythons decimal error ex. .58*100 = 57.999
+                else:
+                    res = self.validateNumText(s)
+            else:
+                r = abs(toInt(toFloat((self.aw.comma2dot(str(s.strip('%')))))))
+                if r > 100:
+                    res = "100%"
+                elif not r == 0:
+                    res = str(r) + '%'
+        except Exception:
+            pass
+        return res
+
+    def pctText2Num(self,s):
+        try:
+            if len(s) == 0:
+                res = 0
+            elif s == s.strip('%'):
+                res = self.aw.float2float(toFloat(s))
+            else:
+                res = self.aw.float2float(toFloat(s.strip('%'))/100,2)
+        except:
+            res = 0
+        return res
+
+
+    ###### SETUP TAB #####
+
+    def initSetupTab(self):
+        if not self.tabInitialized[5]:
+            # fill Setup tab
+            self.setup_ui = SetupWidget.Ui_SetupWidget()
+            self.setup_ui.setupUi(self.C6Widget)
+            # explicitly reset labels to have them translated with a controlled context
+            self.setup_ui.doubleSpinBoxRoasterSize.setToolTip(QApplication.translate("Tooltip", "The maximum nominal batch size of the machine in kg",None))
+            self.setup_ui.labelOrganization.setText(QApplication.translate("Label", "Organization",None))
+            self.setup_ui.labelOperator.setText(QApplication.translate("Label", "Operator",None))
+            self.setup_ui.labelMachine.setText(QApplication.translate("Label", "Machine",None))
+            self.setup_ui.labelDrumSpeed.setText(QApplication.translate("Label", "Drum Speed",None))
+            # hack to access the Qt automatic translation of the RestoreDefaults button
+            db = QDialogButtonBox(QDialogButtonBox.RestoreDefaults)
+            defaults_button_text_translated = db.button(QDialogButtonBox.RestoreDefaults).text()
+            self.setup_ui.Defaults.setText(defaults_button_text_translated)
+            self.setup_ui.SetDefaults.setText(QApplication.translate("Button", "Set as Defaults",None))
+            if self.aw.locale not in self.aw.qtbase_locales:
+                self.setup_ui.Defaults.setText(QApplication.translate("Button","Defaults", None))
+            
+            # fill dialog with data
+            self.setup_ui.lineEditOrganization.setText(self.aw.qmc.organization)
+            self.setup_ui.lineEditOperator.setText(self.aw.qmc.operator)
+            self.setup_ui.lineEditMachine.setText(self.aw.qmc.roastertype)
+            self.setup_ui.doubleSpinBoxRoasterSize.setValue(self.aw.qmc.roastersize)
+            self.setup_ui.lineEditDrumSpeed.setText(self.aw.qmc.drumspeed)
+            # connect button signals
+            self.setup_ui.SetDefaults.clicked.connect(self.SetupSetDefaults)
+            self.setup_ui.Defaults.clicked.connect(self.SetupDefaults)
+            
+            # mark tab as initialized
+            self.tabInitialized[5] = True
+            
+    @pyqtSlot(bool)
+    def showenergyhelp(self,_=False):
+        self.helpdialog = self.aw.showHelpDialog(
+                self,            # this dialog as parent
+                self.helpdialog, # the existing help dialog
+                QApplication.translate("Form Caption","Energy Help",None),
+                energy_help.content())
+
+    def closeHelp(self):
+        self.aw.closeHelpDialog(self.helpdialog)
 
     @pyqtSlot(int)
     def roastflagHeavyFCChanged(self,i):
@@ -2969,130 +3859,133 @@ class editGraphDlg(ArtisanResizeablDialog):
                     j = j + 1
 
     def createEventTable(self):
-        try:
-            #### lock shared resources #####
-            self.aw.qmc.samplingsemaphore.acquire(1)
-            
-            nevents = len(self.aw.qmc.specialevents)
-            
-            #self.eventtable.clear() # this crashes Ubuntu 16.04
-    #        if nevents != 0:
-    #            self.eventtable.clearContents() # this crashes Ubuntu 16.04 if device table is empty and also sometimes else
-            self.eventtable.clearSelection() # this seems to work also for Ubuntu 16.04
-            
-            self.eventtable.setRowCount(nevents)
-            self.eventtable.setColumnCount(6)
-            self.eventtable.setHorizontalHeaderLabels([QApplication.translate("Table", "Time", None),
-                                                       QApplication.translate("Table", "ET", None),
-                                                       QApplication.translate("Table", "BT", None),
-                                                       QApplication.translate("Table", "Description", None),
-                                                       QApplication.translate("Table", "Type", None),
-                                                       QApplication.translate("Table", "Value", None)])
-            self.eventtable.setAlternatingRowColors(True)
-            self.eventtable.setEditTriggers(QTableWidget.NoEditTriggers)
-            self.eventtable.setSelectionBehavior(QTableWidget.SelectRows)
-            self.eventtable.setSelectionMode(QTableWidget.ExtendedSelection)
-
-            self.eventtable.setShowGrid(True)
-            
-            self.eventtable.verticalHeader().setSectionResizeMode(2)
-            regextime = QRegularExpression(r"^-?[0-9]?[0-9]?[0-9]:[0-5][0-9]$")
-            etypes = self.aw.qmc.getetypes()
-            #populate table
-            for i in range(nevents):
-                #create widgets
-                typeComboBox = MyQComboBox()
-                typeComboBox.setSizeAdjustPolicy(QComboBox.AdjustToContents)
-                typeComboBox.addItems(etypes)
-                typeComboBox.setCurrentIndex(self.aw.qmc.specialeventstype[i])
+        if not self.tabInitialized[2]:
+            try:
+                #### lock shared resources #####
+                self.aw.qmc.samplingsemaphore.acquire(1)
+                
+                nevents = len(self.aw.qmc.specialevents)
+                
+                #self.eventtable.clear() # this crashes Ubuntu 16.04
+        #        if nevents != 0:
+        #            self.eventtable.clearContents() # this crashes Ubuntu 16.04 if device table is empty and also sometimes else
+                self.eventtable.clearSelection() # this seems to work also for Ubuntu 16.04
+                
+                self.eventtable.setRowCount(nevents)
+                self.eventtable.setColumnCount(6)
+                self.eventtable.setHorizontalHeaderLabels([QApplication.translate("Table", "Time", None),
+                                                           QApplication.translate("Table", "ET", None),
+                                                           QApplication.translate("Table", "BT", None),
+                                                           QApplication.translate("Table", "Description", None),
+                                                           QApplication.translate("Table", "Type", None),
+                                                           QApplication.translate("Table", "Value", None)])
+                self.eventtable.setAlternatingRowColors(True)
+                self.eventtable.setEditTriggers(QTableWidget.NoEditTriggers)
+                self.eventtable.setSelectionBehavior(QTableWidget.SelectRows)
+                self.eventtable.setSelectionMode(QTableWidget.ExtendedSelection)
     
-                if self.aw.qmc.LCDdecimalplaces:
-                    fmtstr = "%.1f"
-                else:
-                    fmtstr = "%.0f"
-    
-                etline = QLineEdit()
-                etline.setReadOnly(True)
-                etline.setAlignment(Qt.AlignRight)
-                try:
-                    ettemp = fmtstr%(self.aw.qmc.temp1[self.aw.qmc.specialevents[i]]) + self.aw.qmc.mode
-                except:
-                    pass
-                etline.setText(ettemp)
+                self.eventtable.setShowGrid(True)
+                
+                self.eventtable.verticalHeader().setSectionResizeMode(2)
+                regextime = QRegularExpression(r"^-?[0-9]?[0-9]?[0-9]:[0-5][0-9]$")
+                etypes = self.aw.qmc.getetypes()
+                #populate table
+                for i in range(nevents):
+                    #create widgets
+                    typeComboBox = MyQComboBox()
+                    typeComboBox.setSizeAdjustPolicy(QComboBox.AdjustToContents)
+                    typeComboBox.addItems(etypes)
+                    typeComboBox.setCurrentIndex(self.aw.qmc.specialeventstype[i])
+        
+                    if self.aw.qmc.LCDdecimalplaces:
+                        fmtstr = "%.1f"
+                    else:
+                        fmtstr = "%.0f"
+        
+                    etline = QLineEdit()
+                    etline.setReadOnly(True)
+                    etline.setAlignment(Qt.AlignRight)
+                    try:
+                        ettemp = fmtstr%(self.aw.qmc.temp1[self.aw.qmc.specialevents[i]]) + self.aw.qmc.mode
+                    except:
+                        pass
+                    etline.setText(ettemp)
+                        
+                    btline = QLineEdit()
+                    btline.setReadOnly(True)
+                    btline.setAlignment(Qt.AlignRight)
+                    bttemp = fmtstr%(self.aw.qmc.temp2[self.aw.qmc.specialevents[i]]) + self.aw.qmc.mode
+                    btline.setText(bttemp)
                     
-                btline = QLineEdit()
-                btline.setReadOnly(True)
-                btline.setAlignment(Qt.AlignRight)
-                bttemp = fmtstr%(self.aw.qmc.temp2[self.aw.qmc.specialevents[i]]) + self.aw.qmc.mode
-                btline.setText(bttemp)
-                
-                valueEdit = QLineEdit()
-                valueEdit.setAlignment(Qt.AlignRight)
-                valueEdit.setText(self.aw.qmc.eventsvalues(self.aw.qmc.specialeventsvalue[i]))
-                
-                timeline = QLineEdit()
-                timeline.setAlignment(Qt.AlignRight)
-                if self.aw.qmc.timeindex[0] > -1 and len(self.aw.qmc.timex) > self.aw.qmc.timeindex[0]:
-                    timez = stringfromseconds(self.aw.qmc.timex[self.aw.qmc.specialevents[i]]-self.aw.qmc.timex[self.aw.qmc.timeindex[0]])
-                else:
-                    timez = stringfromseconds(self.aw.qmc.timex[self.aw.qmc.specialevents[i]])
-                timeline.setText(timez)
-                timeline.setValidator(QRegularExpressionValidator(regextime,self))
-                
-                try:
-                    stringline = QLineEdit(self.aw.qmc.specialeventsStrings[i])
-                except:
-                    stringline = QLineEdit("")
-                #add widgets to the table
-                self.eventtable.setCellWidget(i,0,timeline)
-                self.eventtable.setCellWidget(i,1,etline)
-                self.eventtable.setCellWidget(i,2,btline)
-                self.eventtable.setCellWidget(i,3,stringline)
-                self.eventtable.setCellWidget(i,4,typeComboBox)
-                self.eventtable.setCellWidget(i,5,valueEdit)
-                valueEdit.setValidator(QIntValidator(0,self.aw.eventsMaxValue,self.eventtable.cellWidget(i,5)))
-            header = self.eventtable.horizontalHeader()
-            #header.setStretchLastSection(True)
-            header.setSectionResizeMode(0, QHeaderView.Fixed)
-            header.setSectionResizeMode(1, QHeaderView.Fixed)
-            header.setSectionResizeMode(2, QHeaderView.Fixed)
-            header.setSectionResizeMode(3, QHeaderView.Stretch)
-            header.setSectionResizeMode(4, QHeaderView.ResizeToContents)
-            header.setSectionResizeMode(5, QHeaderView.Fixed)
-            # improve width of Time column
-            self.eventtable.setColumnWidth(0,60)
-            self.eventtable.setColumnWidth(1,65)
-            self.eventtable.setColumnWidth(2,65)
-            self.eventtable.setColumnWidth(5,55)
-            # header.setSectionResizeMode(QHeaderView.Stretch)
-        finally:
-            if self.aw.qmc.samplingsemaphore.available() < 1:
-                self.aw.qmc.samplingsemaphore.release(1)
+                    valueEdit = QLineEdit()
+                    valueEdit.setAlignment(Qt.AlignRight)
+                    valueEdit.setText(self.aw.qmc.eventsvalues(self.aw.qmc.specialeventsvalue[i]))
+                    
+                    timeline = QLineEdit()
+                    timeline.setAlignment(Qt.AlignRight)
+                    if self.aw.qmc.timeindex[0] > -1 and len(self.aw.qmc.timex) > self.aw.qmc.timeindex[0]:
+                        timez = stringfromseconds(self.aw.qmc.timex[self.aw.qmc.specialevents[i]]-self.aw.qmc.timex[self.aw.qmc.timeindex[0]])
+                    else:
+                        timez = stringfromseconds(self.aw.qmc.timex[self.aw.qmc.specialevents[i]])
+                    timeline.setText(timez)
+                    timeline.setValidator(QRegularExpressionValidator(regextime,self))
+                    
+                    try:
+                        stringline = QLineEdit(self.aw.qmc.specialeventsStrings[i])
+                    except:
+                        stringline = QLineEdit("")
+                    #add widgets to the table
+                    self.eventtable.setCellWidget(i,0,timeline)
+                    self.eventtable.setCellWidget(i,1,etline)
+                    self.eventtable.setCellWidget(i,2,btline)
+                    self.eventtable.setCellWidget(i,3,stringline)
+                    self.eventtable.setCellWidget(i,4,typeComboBox)
+                    self.eventtable.setCellWidget(i,5,valueEdit)
+                    valueEdit.setValidator(QIntValidator(0,self.aw.eventsMaxValue,self.eventtable.cellWidget(i,5)))
+                header = self.eventtable.horizontalHeader()
+                #header.setStretchLastSection(True)
+                header.setSectionResizeMode(0, QHeaderView.Fixed)
+                header.setSectionResizeMode(1, QHeaderView.Fixed)
+                header.setSectionResizeMode(2, QHeaderView.Fixed)
+                header.setSectionResizeMode(3, QHeaderView.Stretch)
+                header.setSectionResizeMode(4, QHeaderView.ResizeToContents)
+                header.setSectionResizeMode(5, QHeaderView.Fixed)
+                # improve width of Time column
+                self.eventtable.setColumnWidth(0,60)
+                self.eventtable.setColumnWidth(1,65)
+                self.eventtable.setColumnWidth(2,65)
+                self.eventtable.setColumnWidth(5,55)
+                # header.setSectionResizeMode(QHeaderView.Stretch)
+            finally:
+                if self.aw.qmc.samplingsemaphore.available() < 1:
+                    self.aw.qmc.samplingsemaphore.release(1)
+            self.tabInitialized[2] = True
 
 
     def saveEventTable(self):
-        try:
-            #### lock shared resources #####
-            self.aw.qmc.samplingsemaphore.acquire(1)
-            nevents = self.eventtable.rowCount()
-            for i in range(nevents):
-                try:
-                    timez = self.eventtable.cellWidget(i,0)
-                    if self.aw.qmc.timeindex[0] > -1:
-                        self.aw.qmc.specialevents[i] = self.aw.qmc.time2index(self.aw.qmc.timex[self.aw.qmc.timeindex[0]]+ stringtoseconds(str(timez.text())))
-                    else:
-                        self.aw.qmc.specialevents[i] = self.aw.qmc.time2index(stringtoseconds(str(timez.text())))
-                    description = self.eventtable.cellWidget(i,3)
-                    self.aw.qmc.specialeventsStrings[i] = description.text()
-                    etype = self.eventtable.cellWidget(i,4)
-                    self.aw.qmc.specialeventstype[i] = etype.currentIndex()
-                    evalue = self.eventtable.cellWidget(i,5).text()
-                    self.aw.qmc.specialeventsvalue[i] = self.aw.qmc.str2eventsvalue(str(evalue))
-                except:
-                    pass
-        finally:
-            if self.aw.qmc.samplingsemaphore.available() < 1:
-                self.aw.qmc.samplingsemaphore.release(1)
+        if self.tabInitialized[2]:
+            try:
+                #### lock shared resources #####
+                self.aw.qmc.samplingsemaphore.acquire(1)
+                nevents = self.eventtable.rowCount()
+                for i in range(nevents):
+                    try:
+                        timez = self.eventtable.cellWidget(i,0)
+                        if self.aw.qmc.timeindex[0] > -1:
+                            self.aw.qmc.specialevents[i] = self.aw.qmc.time2index(self.aw.qmc.timex[self.aw.qmc.timeindex[0]]+ stringtoseconds(str(timez.text())))
+                        else:
+                            self.aw.qmc.specialevents[i] = self.aw.qmc.time2index(stringtoseconds(str(timez.text())))
+                        description = self.eventtable.cellWidget(i,3)
+                        self.aw.qmc.specialeventsStrings[i] = description.text()
+                        etype = self.eventtable.cellWidget(i,4)
+                        self.aw.qmc.specialeventstype[i] = etype.currentIndex()
+                        evalue = self.eventtable.cellWidget(i,5).text()
+                        self.aw.qmc.specialeventsvalue[i] = self.aw.qmc.str2eventsvalue(str(evalue))
+                    except:
+                        pass
+            finally:
+                if self.aw.qmc.samplingsemaphore.available() < 1:
+                    self.aw.qmc.samplingsemaphore.release(1)
 
     @pyqtSlot(bool)
     def copyDataTabletoClipboard(self,_=False):
@@ -3764,12 +4657,14 @@ class editGraphDlg(ArtisanResizeablDialog):
             self.aw.qmc.ambient_pressure = float(self.aw.comma2dot(str(self.pressureedit.text())))
         except Exception:
             self.aw.qmc.ambient_pressure = 0
+        if self.tabInitialized[5]:
+            #update setup
+            self.aw.qmc.organization = self.setup_ui.lineEditOrganization.text()
+            self.aw.qmc.operator = self.setup_ui.lineEditOperator.text()
+            self.aw.qmc.roastertype = self.setup_ui.lineEditMachine.text()
+            self.aw.qmc.roastersize = self.setup_ui.doubleSpinBoxRoasterSize.value()
+            self.aw.qmc.drumspeed = self.setup_ui.lineEditDrumSpeed.text()
         #update notes
-        self.aw.qmc.roastertype = self.roaster.text()
-        self.aw.qmc.roastersize = self.capacity.value()
-        self.aw.qmc.operator = self.operator.text()
-        self.aw.qmc.organization = self.organization.text()
-        self.aw.qmc.drumspeed = self.drumspeed.text()
         self.aw.qmc.roastingnotes = self.roastingeditor.toPlainText()
         self.aw.qmc.cuppingnotes = self.cuppingeditor.toPlainText()
         if self.aw.superusermode or self.batcheditmode:
@@ -3783,6 +4678,10 @@ class editGraphDlg(ArtisanResizeablDialog):
         # if events were changed we clear the event flag position cache 
         if self.aw.qmc.timeindex != self.org_timeindex:
             self.aw.qmc.l_annotations_dict = {}
+            
+        if self.tabInitialized[4]:
+            # save column widths
+            self.aw.qmc.energytablecolumnwidths = [self.energy_ui.datatable.columnWidth(c) for c in range(self.energy_ui.datatable.columnCount())]
         
         # load selected recent roast template in the background
         if self.aw.loadbackgroundUUID(self.template_file,self.template_uuid):

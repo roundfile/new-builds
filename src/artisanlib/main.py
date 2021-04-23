@@ -195,9 +195,8 @@ import artisanlib.arabic_reshaper
 from artisanlib.util import (appFrozen, stringp, uchr, d, encodeLocal, s2a,
         deltaLabelPrefix, deltaLabelUTF8, deltaLabelBigPrefix, deltaLabelMathPrefix, stringfromseconds, stringtoseconds,
         fromFtoC, fromCtoF, RoRfromFtoC, RoRfromCtoF, convertRoR, convertTemp, path2url, toInt, toString, toList, toFloat,
-        toDouble, toBool, toStringList, toMap, removeAll)
+        toBool, toStringList, toMap, removeAll)
 from artisanlib.qtsingleapplication import QtSingleApplication
-from artisanlib.preferences import preferencesDialog
 
 
 from Phidget22.Phidget import Phidget as PhidgetDriver
@@ -660,6 +659,7 @@ from artisanlib.autosave import autosaveDlg
 from artisanlib.platform import platformDlg
 from artisanlib.pid_control import FujiPID, PIDcontrol, DtaPID
 from artisanlib.widgets import MyQLCDNumber
+from artisanlib.polyhack import polyhackDlg  #dave polyfit
 
 from artisanlib import pid
 from artisanlib.time import ArtisanTime
@@ -1142,6 +1142,9 @@ class tgraphcanvas(FigureCanvas):
                        "+HB AT",                    #117
                        "+WebSocket 78",             #118
                        "+WebSocket 910",            #119
+                       "Yocto 0-10V Rx",            #120
+                       "Yocto milliVolt Rx",        #121
+                       "Yocto Serial",              #122
                        ]
 
         # ADD DEVICE:
@@ -1176,7 +1179,10 @@ class tgraphcanvas(FigureCanvas):
             106, # Phidget HUB IO 0
             107, # Phidget HUB IO Digital 0
             108, # Yocto 4-20mA Rx
-            111  # WebSocket
+            111,  # WebSocket
+            120, # Yocto-0-10V-Rx
+            121, # Yocto-milliVolt-Rx
+            122 # Yocto-Serial
         ]
 
         # ADD DEVICE:
@@ -1240,6 +1246,9 @@ class tgraphcanvas(FigureCanvas):
             106, # Phidget HUB IO 0
             107, # Phidget HUB IO Digital 0
             108, # Yocto 4-20mA Rx
+            120, # Yocto-0-10V-Rx
+            121, # Yocto-milliVolt-Rx
+            122, # Yocto-Serial
         ]
 
         #extra devices
@@ -1887,6 +1896,8 @@ class tgraphcanvas(FigureCanvas):
         self.quantifiedEvent = [] # holds an event quantified during sample(), a tuple [<eventnr>,<value>,<recordEvent>]
 
         self.loadaxisfromprofile = False # if set, axis are loaded from profile
+        
+#        self.energytablecolumnwidths = []
 
         # set initial limits for X and Y axes. But they change after reading the previous seetings at aw.settingsload()
         self.startofx_default = -30
@@ -2263,6 +2274,60 @@ class tgraphcanvas(FigureCanvas):
         self.statssummary = False
         self.showtimeguide = True
         self.statsmaxchrperline = 30
+        
+        #EnergyUse
+        self.energyunits = ["BTU", "kJ", "kCal", "kWh", "hph"]
+        self.powerunits = ["BTU/h", "kJ/h", "kCal/h", "kW", "hp"]
+        self.sourcenames = ["LPG", "NG", QApplication.translate("ComboBox","Elec",None)]
+        ## setup defaults (stored in app :
+        # Burners
+        self.loadlabels_setup = [""]*4                   # burner labels
+        self.loadratings_setup = [0]*4                   # in ratingunits
+        self.ratingunits_setup = [0]*4                   # index in list self.powerunits
+        self.sourcetypes_setup = [0]*4                   # index in list self.sourcenames
+        self.load_etypes_setup = [0]*4                   # index of the etype that is the gas/burner setting
+        self.presssure_percents_setup = [False]*4        # event value in pressure percent
+        self.loadevent_zeropcts_setup = [0]*4            # event value corresponding to 0 percent
+        self.loadevent_hundpcts_setup = [100]*4          # event value corresponding to 100 percent
+        # Protocol
+        self.preheatDuration_setup = 0                     # length of preheat in seconds
+        self.preheatenergies_setup = [0]*4                 # rating of the preheat burner
+        self.betweenbatchDuration_setup = 0                # length of bbp in seconds
+        self.betweenbatchenergies_setup = [0]*4            # rating of the between batch burner
+        self.coolingDuration_setup = 0                     # length of cooling in seconds
+        self.coolingenergies_setup = [0]*4                 # rating of the cooling burner
+        self.betweenbatch_after_preheat_setup = False      # True if after preheat a BBP is done
+        self.electricEnergyMix_setup = 0                   # the amount of renewable electric energy in the energy mix in %
+        # Others
+        self.energyresultunit_setup = 0                    # index in list self.powerunits
+        self.kind_list = [QApplication.translate("Label","Preheat Measured",None),
+                          QApplication.translate("Label","Preheat %",None),
+                          QApplication.translate("Label","BBP Measured",None),
+                          QApplication.translate("Label","BBP %",None),
+                          QApplication.translate("Label","Cooling Measured",None),
+                          QApplication.translate("Label","Cooling %",None),
+                          QApplication.translate("Label","Continuous",None),
+                          QApplication.translate("Label","Roast Event",None)]
+
+        ## working variables (stored in .alog profiles):
+        # Burners
+        self.loadlabels = self.loadlabels_setup                  # burner labels
+        self.loadratings = self.loadratings_setup                # in ratingunits
+        self.ratingunits = self.ratingunits_setup                # index in list self.heatunits 
+        self.sourcetypes = self.sourcetypes_setup                # index in list self.sourcetypes
+        self.load_etypes = self.load_etypes_setup                # index of the etype that is the gas/burner setting
+        self.presssure_percents = self.presssure_percents_setup  # event value in pressure percent
+        self.loadevent_zeropcts = self.loadevent_zeropcts_setup  # event value corresponding to 0 percent
+        self.loadevent_hundpcts = self.loadevent_hundpcts_setup  # event value corresponding to 100 percent
+        # Protocol
+        self.preheatDuration = self.preheatDuration_setup            # length of preheat in seconds
+        self.preheatenergies = self.preheatenergies_setup            # rating of the preheat burner
+        self.betweenbatchDuration = self.betweenbatchDuration_setup  # length of bbp in seconds
+        self.betweenbatchenergies = self.betweenbatchenergies_setup  # rating of the between batch burner
+        self.coolingDuration = self.coolingDuration_setup            # length of cooling in seconds
+        self.coolingenergies = self.coolingenergies_setup            # rating of the cooling burner
+        self.betweenbatch_after_preheat = self.betweenbatch_after_preheat_setup # True if after preheat a BBP is done
+        self.electricEnergyMix = self.electricEnergyMix_setup        # the amount of renewable electric energy in the energy mix in %
 
         #mouse cross lines measurement
         self.baseX,self.baseY = None, None
@@ -2339,6 +2404,50 @@ class tgraphcanvas(FigureCanvas):
     #NOTE: empty Figure is initialy drawn at the end of aw.settingsload()
     #################################    FUNCTIONS    ###################################
     #####################################################################################
+
+    # set current burner settings as defaults
+    def setEnergyLoadDefaults(self):
+        self.loadlabels_setup = self.loadlabels[:]
+        self.loadratings_setup = self.loadratings[:]
+        self.ratingunits_setup = self.ratingunits[:]
+        self.sourcetypes_setup = self.sourcetypes[:]
+        self.load_etypes_setup = self.load_etypes[:]
+        self.presssure_percents_setup = self.presssure_percents[:]
+        self.loadevent_zeropcts_setup = self.loadevent_zeropcts[:]
+        self.loadevent_hundpcts_setup = self.loadevent_hundpcts[:]
+        self.electricEnergyMix_setup = self.electricEnergyMix
+  
+    # restore burner settings to their defaults
+    def restoreEnergyLoadDefaults(self):
+        self.loadlabels = self.loadlabels_setup[:]
+        self.loadratings = self.loadratings_setup[:]
+        self.ratingunits = self.ratingunits_setup[:]
+        self.sourcetypes = self.sourcetypes_setup[:]
+        self.load_etypes = self.load_etypes_setup[:]
+        self.presssure_percents = self.presssure_percents_setup[:]
+        self.loadevent_zeropcts = self.loadevent_zeropcts_setup[:]
+        self.loadevent_hundpcts = self.loadevent_hundpcts_setup[:]
+        self.electricEnergyMix = self.electricEnergyMix_setup
+    
+    # set current protocol settings as defaults
+    def setEnergyProtocolDefaults(self):
+        self.preheatDuration_setup = self.preheatDuration
+        self.preheatenergies_setup = self.preheatenergies[:]
+        self.betweenbatchDuration_setup = self.betweenbatchDuration
+        self.betweenbatchenergies_setup = self.betweenbatchenergies[:]
+        self.coolingDuration_setup = self.coolingDuration
+        self.coolingenergies_setup = self.coolingenergies[:]
+        self.betweenbatch_after_preheat_setup = self.betweenbatch_after_preheat
+    
+    # restore protocol settings to their defaults    
+    def restoreEnergyProtocolDefaults(self):
+        self.preheatDuration = self.preheatDuration_setup
+        self.preheatenergies = self.preheatenergies_setup[:]
+        self.betweenbatchDuration = self.betweenbatchDuration_setup
+        self.betweenbatchenergies = self.betweenbatchenergies_setup[:]
+        self.coolingDuration = self.coolingDuration_setup
+        self.coolingenergies = self.coolingenergies_setup[:]
+        self.betweenbatch_after_preheat = self.betweenbatch_after_preheat_setup
 
     @pyqtSlot()
     def fileDirty(self):
@@ -4218,22 +4327,28 @@ class tgraphcanvas(FigureCanvas):
                     # 3 Gas or electric power: gas heats BT _faster_ because of hoter air.
                     # Every roaster will have a different constantN (self.projectionconstant).
 
-                    den = self.ctemp1[-1] - self.ctemp2[-1]  #denominator ETn - BTn
-                    if den > 0 and len(aw.qmc.delta2)>0 and aw.qmc.delta2[-1]: # if ETn > BTn
-                        #get x points
-                        xpoints = list(numpy.arange(self.timex[-1],self.endofx + starttime, self.delay/1000.))  #do two minutes after endofx (+ 120 seconds); why? now +starttime
-                        #get y points
-                        ypoints = [self.ctemp2[-1]]                                  # start initializing with last BT
-                        K =  self.projectionconstant*aw.qmc.delta2[-1]/den/60.                 # multiplier
-                        for _ in range(len(xpoints)-1):                                     # create new points from previous points
-                            DeltaT = K*(self.ctemp1[-1]- ypoints[-1])                        # DeltaT = K*(ET - BT)
-                            ypoints.append(ypoints[-1]+ DeltaT)                             # add DeltaT to the next ypoint
-
-                        #plot ET level (straight line) and BT curve
-                        if self.l_ETprojection is not None:
-                            self.l_ETprojection.set_data([self.timex[-1],self.endofx + starttime], [self.ctemp1[-1], self.ctemp1[-1]])
-                        if self.l_BTprojection is not None:
-                            self.l_BTprojection.set_data(xpoints, ypoints)
+                    if len(self.ctemp1) > 0 and len(self.ctemp2) > 0:
+                        den = self.ctemp1[-1] - self.ctemp2[-1]  #denominator ETn - BTn
+                        if den > 0 and len(aw.qmc.delta2)>0 and aw.qmc.delta2[-1]: # if ETn > BTn
+                            #get x points
+                            xpoints = list(numpy.arange(self.timex[-1],self.endofx + starttime, self.delay/1000.))  #do two minutes after endofx (+ 120 seconds); why? now +starttime
+                            #get y points
+                            ypoints = [self.ctemp2[-1]]                                  # start initializing with last BT
+                            K =  self.projectionconstant*aw.qmc.delta2[-1]/den/60.                 # multiplier
+                            for _ in range(len(xpoints)-1):                                     # create new points from previous points
+                                DeltaT = K*(self.ctemp1[-1]- ypoints[-1])                        # DeltaT = K*(ET - BT)
+                                ypoints.append(ypoints[-1]+ DeltaT)                             # add DeltaT to the next ypoint
+    
+                            #plot ET level (straight line) and BT curve
+                            if self.l_ETprojection is not None:
+                                self.l_ETprojection.set_data([self.timex[-1],self.endofx + starttime], [self.ctemp1[-1], self.ctemp1[-1]])
+                            if self.l_BTprojection is not None:
+                                self.l_BTprojection.set_data(xpoints, ypoints)
+                        else:
+                            if self.l_ETprojection:
+                                self.l_ETprojection.set_data([],[])
+                            if self.l_BTprojection:
+                                self.l_BTprojection.set_data([],[])
                     else:
                         if self.l_ETprojection:
                             self.l_ETprojection.set_data([],[])
@@ -5221,7 +5336,7 @@ class tgraphcanvas(FigureCanvas):
 
                 self.roastUUID = None # reset UUID
                 aw.qmc.roastbatchnr = 0 # initialized to 0, set to increased batchcounter on DROP
-                aw.qmc.roastbatchpos = 1 # initialized to 0, set to increased batchsequence on DROP
+                aw.qmc.roastbatchpos = 1 # initialized to 1, set to increased batchsequence on DROP
                 aw.qmc.roastbatchprefix = aw.qmc.batchprefix
 
                 if self.HUDflag:
@@ -5261,7 +5376,7 @@ class tgraphcanvas(FigureCanvas):
                 # quantification is blocked if lock_quantification_sampling_ticks is not 0
                 # (eg. after a change of the event value by button or slider actions)
                 aw.block_quantification_sampling_ticks = [0,0,0,0]
-                aw.extraeventsactionslastvalue = [None,None,None,None] # used by +-% event buttons in ON mode when no event was registered yet
+                #aw.extraeventsactionslastvalue = [None,None,None,None] # used by +-% event buttons in ON mode when no event was registered yet
 
                 # if we are in KeepON mode, the reset triggered by ON should resepect the roastpropertiesflag ("Delete Properties on Reset")
                 if self.roastpropertiesflag and (self.flagKeepON or not keepProperties):
@@ -5277,7 +5392,10 @@ class tgraphcanvas(FigureCanvas):
                     self.operator = self.operator_setup
                     self.roastertype = self.roastertype_setup
                     self.roastersize = self.roastersize_setup
-                    self.drumspeed = self.drumspeeds_setup
+                    self.drumspeed = self.drumspeed_setup
+                    # set energy defaults
+                    self.restoreEnergyLoadDefaults()
+                    self.restoreEnergyProtocolDefaults() 
                     #
                     self.weight = [0,0,self.weight[2]]
                     self.volume = [0,0,self.volume[2]]
@@ -10831,16 +10949,17 @@ class tgraphcanvas(FigureCanvas):
                     self.updategraphicsSignal.emit() # we need this to have the projections redrawn immediately
 
     def decBatchCounter(self):
-        if aw.qmc.batchcounter > -1 and not bool(aw.simulator):
-            aw.qmc.batchcounter -= 1 # we decrease the batch counter
-            # set the batchcounter of the current profile
-            aw.qmc.roastbatchnr = 0
+        if not bool(aw.simulator):
             if aw.qmc.lastroastepoch + 5400 < aw.qmc.roastepoch:
                 # reset the sequence counter
                 aw.qmc.batchsequence = 1
             elif aw.qmc.batchsequence > 1:
                 aw.qmc.batchsequence -= 1
-            aw.qmc.roastbatchpos = 0
+            aw.qmc.roastbatchpos = aw.qmc.batchsequence
+        if aw.qmc.batchcounter > -1 and not bool(aw.simulator):
+            aw.qmc.batchcounter -= 1 # we decrease the batch counter
+            # set the batchcounter of the current profile
+            aw.qmc.roastbatchnr = 0
             # decr. the batchcounter of the loaded app settings
             if aw.settingspath and aw.settingspath != "":
                 try:
@@ -10856,6 +10975,16 @@ class tgraphcanvas(FigureCanvas):
                     aw.settingspath = ""
 
     def incBatchCounter(self):
+        if not bool(aw.simulator):
+            # update batchsequence by estimating batch sequence (roastbatchpos) from lastroastepoch and roastepoch
+            # if this roasts DROP is more than 1.5h after the last registered DROP, we assume a new session starts
+            if aw.qmc.lastroastepoch + 5400 < aw.qmc.roastepoch:
+                # reset the sequence counter
+                aw.qmc.batchsequence = 1
+            else:
+                aw.qmc.batchsequence += 1
+            aw.qmc.roastbatchpos = aw.qmc.batchsequence
+        # set roastbatchpos
         if aw.qmc.batchcounter > -1 and not bool(aw.simulator):
             aw.qmc.batchcounter += 1 # we increase the batch counter
             # set the batchcounter of the current profile
@@ -10875,20 +11004,9 @@ class tgraphcanvas(FigureCanvas):
                     settings.endGroup()
                 except Exception:
                     aw.settingspath = ""
-            # update batchsequence by estimating batch sequence (roastbatchpos) from lastroastepoch and roastepoch
-            # if this roasts DROP is more than 1.5h after the last registered DROP, we assume a new session starts
-            if aw.qmc.lastroastepoch + 5400 < aw.qmc.roastepoch:
-                # reset the sequence counter
-                aw.qmc.batchsequence = 1
-            else:
-                aw.qmc.batchsequence += 1
-            # set roastbatchpos
-            aw.qmc.roastbatchpos = aw.qmc.batchsequence
         else: # batch counter system inactive
-            # set the batchcounter of the current profile
-            aw.qmc.batchsequence = 1
+            # set the batchcounter of the current profiles
             aw.qmc.roastbatchnr = 0
-            aw.qmc.roastbatchpos = 1
         # update lastroastepoch to time of roastdate
         aw.qmc.lastroastepoch = aw.qmc.roastepoch
 
@@ -11606,6 +11724,280 @@ class tgraphcanvas(FigureCanvas):
             _, _, exc_tb = sys.exc_info()
             aw.qmc.adderror((QApplication.translate("Error Message","Exception:",None) + " writestatistics() {0}").format(str(ex)),exc_tb.tb_lineno)
 
+
+    def convertHeat(self,value,fromUnit,toUnit=0):
+        if value in [-1,None]:
+            return value
+        conversion = {0:{0:1., 1:1.0551, 2:0.2521644, 3:0.0002931, 4:0.000393015},   #"btu":{"btu","kj","kcal","kwh",hph}
+                      1:{0:0.9478, 1:1., 2:0.2390057, 3:0.0002778, 4:0.000372506},   #"kj":{"btu","kj","kcal","kwh",hph}
+                      2:{0:3.965667,1:4.184,2:1.,3:0.0011627, 4:0.001559609},        #"kcal":{"btu","kj","kcal","kwh",hph}
+                      3:{0:3412.1416, 1:3600., 2:860.050647, 3:1., 4:1.34102209},    #"kwh":{"btu","kj","kcal","kwh",hph}
+                      4:{0:2544.43358, 1:2684.51954, 2:641.18648, 3:0.7457, 4:1.}}   #"hph":{"btu","kj","kcal","kwh",hph}
+        return value * conversion[fromUnit][toUnit]
+
+    def calcEnergyuse(self,beanweightstr=""):
+        try:
+            energymetrics = {}
+            btu_list = []
+            if len(self.timex) == 0:
+                aw.sendmessage(QApplication.translate("Message","No profile data", None),append=False)
+                return energymetrics, btu_list
+
+            # helping function
+            def formatLoadLabel(i):
+                if len(self.loadlabels[i]) > 0:
+                    return  self.loadlabels[i]
+                else:
+                    return chr(ord('A')+i)
+                    
+            # get the valid green weight
+            if beanweightstr != "":
+                w = toFloat(beanweightstr)
+            else: 
+                w = aw.qmc.weight[0]
+            bean_weight = aw.convertWeight(w,aw.qmc.weight_units.index(aw.qmc.weight[2]),1) # to kg
+                        
+            #reference: https://www.eia.gov/environment/emissions/co2_vol_mass.php
+            #           https://carbonpositivelife.com/co2-per-kwh-of-electricity/
+            # entries must match those in self.sourcetypes
+            CO2kg_per_BTU = {0:6.307e-05, 1:5.307e-05, 2:0.94}
+
+            # must be a better way
+            eTypes = [""] + self.etypes[:][:4]
+            
+#            # true if bernoulli set for the burner slider
+#            bernoulli = [None]*5
+#            for i in range(0,5):
+#                try:
+#                    if self.load_etypes[i] != 0:
+#                        bernoulli[i] = aw.eventsliderBernoulli[self.load_etypes[i]-1]
+#                except:
+#                    bernoulli[i] = False
+
+            # init the prev_loadtime to drop if it exists or to the end of profile time
+            if self.timeindex[6] > 0:
+                prev_loadtime = [self.timex[self.timeindex[6]]]*4
+            else:
+                prev_loadtime = [self.timex[-1]]*4
+                aw.sendmessage(QApplication.translate("Message","Profile has no DROP event", None),append=False)
+                    
+            for i in range(0,4):
+                # iterate specialevents in reverse from DROP to the first event
+                for j in range(len(self.specialevents) - 1, -1, -1):
+                    if self.load_etypes[i] != 0 and self.specialeventstype[j] == self.load_etypes[i]-1:
+                        # skip if loadrating is zero
+                        if self.loadratings[i] == 0:
+                            break
+                        loadtime = self.timex[self.specialevents[j]]
+                        # exclude heat before charge event
+                        if self.timeindex[0] > -1 and loadtime <= self.timex[self.timeindex[0]]:
+                            if prev_loadtime[i] <= self.timex[self.timeindex[0]]:
+                                break
+                            else:
+                                loadtime = self.timex[self.timeindex[0]]
+                        duration = prev_loadtime[i] - loadtime
+
+                        # exclude heat after drop event
+                        if duration < 0:
+                            continue
+                        prev_loadtime[i] = loadtime
+                        # scale the burner setting for 0-100%
+                        val = (self.specialeventsvalue[j] - 1) * 10
+                        emin = toInt(self.loadevent_zeropcts[i])  #dave check these, they should already be int's
+                        emax = toInt(self.loadevent_hundpcts[i])
+                        scaled = (val - emin) / (emax - emin)  #emax > emin enforced by energy.py
+                        load_pct = min(1,max(0,scaled)) * 100
+                        if self.presssure_percents[i] and self.sourcetypes[i] in [0,1]:   # gas loads only
+                            # convert pressure to heat
+                            factor = math.sqrt(load_pct / 100)
+                        else:
+                            factor = (load_pct / 100)
+                        
+                        BTUs = self.loadratings[i] * factor * (duration / 3600) * self.convertHeat(1,self.ratingunits[i],0)
+                        if BTUs > 0:
+                            loadlabel = "{}-{}".format(formatLoadLabel(i), eTypes[self.load_etypes[i]])
+                            kind = 7  #Roast Event 
+                            sortorder = (2000 * (i + 1)) + j
+                            CO2g = BTUs * CO2kg_per_BTU[self.sourcetypes[i]] * 1000
+                            if self.sourcetypes[i] in [2]:  #electicity
+                                CO2g = CO2g * (1 - self.electricEnergyMix/100)
+                            btu_list.append({"load_pct":load_pct,"duration":duration,"BTUs":BTUs,"CO2g":CO2g,"LoadLabel":loadlabel,"Kind":kind,"SourceType":self.sourcetypes[i],"SortOrder":sortorder})
+                ### end of loop: for j in range(len(self.specialevents) - 1, -1, -1)
+                
+                # calculate Continuous event type
+                if self.load_etypes[i] == 0:
+                    if self.timeindex[0] > -1 and self.timeindex[6] > 0:
+                        duration = self.timex[self.timeindex[6]] - self.timex[self.timeindex[0]]
+                    else:
+                        duration = 0
+                        aw.sendmessage(QApplication.translate("Message","Missing CHARGE or DROP event", None),append=False)
+                    load_pct = toInt(self.loadevent_hundpcts[i])  #needed only for the btu_list and outmsg
+                    if self.presssure_percents[i] and self.sourcetypes[i] in [0,1]:   # gas loads only
+                        # convert pressure to heat
+                        factor = math.sqrt(load_pct / 100)
+                    else:
+                        factor = (load_pct / 100)
+                    
+                    loadlabel = formatLoadLabel(i)
+                    kind = 6  #Roast Continuous
+                    fueltype = self.sourcetypes[i]
+                    sortorder = 2000 - i
+                    BTUs = self.loadratings[i] * factor * (duration / 3600) * self.convertHeat(1,self.ratingunits[i],0)
+                    CO2g = BTUs * CO2kg_per_BTU[fueltype] * 1000
+                    if self.sourcetypes[i] in [2]:  #electicity
+                        CO2g = CO2g * (1 - self.electricEnergyMix/100)
+                    if BTUs > 0:
+                        btu_list.append({"load_pct":load_pct,"duration":duration,"BTUs":BTUs,"CO2g":CO2g,"LoadLabel":loadlabel,"Kind":kind,"SourceType":self.sourcetypes[i],"SortOrder":sortorder})
+
+                # calculate preheat
+                if self.preheatenergies[i] > 0 and aw.qmc.roastbatchpos == 1:
+                    if self.preheatenergies[i] <= 1 and self.preheatDuration > 0:
+                        # percent load multiplied by duration
+                        load_pct = self.preheatenergies[i] * 1000./10
+                        if self.presssure_percents[i] and self.sourcetypes[i] in [0,1]:   # gas loads only
+                            # convert pressure to heat
+                            factor = math.sqrt(load_pct / 100)
+                        else:
+                            factor = (load_pct / 100)
+                        duration = self.preheatDuration
+                        BTUs = self.loadratings[i] * factor * (duration / 3600) * self.convertHeat(1,self.ratingunits[i],0)
+                        kind = 1  #Preheat Percent
+                    else:
+                        # measured value
+                        load_pct = 0
+                        duration = 0
+                        BTUs = self.preheatenergies[i] * self.convertHeat(1,self.ratingunits[i],0)
+                        kind = 0  #Preheat Measured
+
+                    loadlabel = formatLoadLabel(i)
+                    sortorder = 100 + i
+                    CO2g = BTUs * CO2kg_per_BTU[self.sourcetypes[i]] * 1000
+                    if self.sourcetypes[i] in [2]:  #electicity
+                        CO2g = CO2g * (1 - self.electricEnergyMix/100)
+                    if BTUs > 0:
+                        btu_list.append({"load_pct":load_pct,"duration":duration,"BTUs":BTUs,"CO2g":CO2g,"LoadLabel":loadlabel,"Kind":kind,"SourceType":self.sourcetypes[i],"SortOrder":sortorder})
+
+                # calculate betweenbatch 
+                if self.betweenbatchenergies[i] > 0 and (aw.qmc.roastbatchpos > 1 or aw.qmc.betweenbatch_after_preheat):
+                    if self.betweenbatchenergies[i] <= 1 and self.betweenbatchDuration > 0:
+                        # percent load multiplied by duration
+                        load_pct = self.betweenbatchenergies[i] * 1000./10
+                        if self.presssure_percents[i] and self.sourcetypes[i] in [0,1]:   # gas loads only
+                            # convert pressure to heat
+                            factor = math.sqrt(load_pct / 100)
+                        else:
+                            factor = (load_pct / 100)
+                        duration = self.betweenbatchDuration
+                        BTUs = self.loadratings[i] * factor * (duration / 3600) * self.convertHeat(1,self.ratingunits[i],0)
+                        kind = 3  #BBP Percent
+                    else:
+                        # measured value
+                        load_pct = 0
+                        duration = 0
+                        BTUs = self.betweenbatchenergies[i] * self.convertHeat(1,self.ratingunits[i],0)
+                        kind = 2  #BBP Measured
+
+                    loadlabel = formatLoadLabel(i)
+                    sortorder = 400 + i
+                    CO2g = BTUs * CO2kg_per_BTU[self.sourcetypes[i]] * 1000
+                    if self.sourcetypes[i] in [2]:  #electicity
+                        CO2g = CO2g * (1 - self.electricEnergyMix/100)
+                    if BTUs > 0:
+                        btu_list.append({"load_pct":load_pct,"duration":duration,"BTUs":BTUs,"CO2g":CO2g,"LoadLabel":loadlabel,"Kind":kind,"SourceType":self.sourcetypes[i],"SortOrder":sortorder})
+
+                # calculate cooling 
+                if self.coolingenergies[i] > 0 and aw.qmc.roastbatchpos == 1:
+                    if self.coolingenergies[i] <= 1 and self.coolingDuration > 0:
+                        # percent load multiplied by duration
+                        load_pct = self.coolingenergies[i] * 1000./10
+                        if self.presssure_percents[i] and self.sourcetypes[i] in [0,1]:   # gas loads only
+                            # convert pressure to heat
+                            factor = math.sqrt(load_pct / 100)
+                        else:
+                            factor = (load_pct / 100)
+                        duration = self.coolingDuration
+                        BTUs = self.loadratings[i] * factor * (duration / 3600) * self.convertHeat(1,self.ratingunits[i],0)
+                        kind = 5  #Cooling Percent
+                    else:
+                        # measured value
+                        load_pct = 0
+                        duration = 0
+                        BTUs = self.coolingenergies[i] * self.convertHeat(1,self.ratingunits[i],0)
+                        kind = 4  #Cooling Measured
+
+                    loadlabel = formatLoadLabel(i)
+                    sortorder = 800 + i
+                    CO2g = BTUs * CO2kg_per_BTU[self.sourcetypes[i]] * 1000
+                    if self.sourcetypes[i] in [2]:  #electicity
+                        CO2g = CO2g * (1 - self.electricEnergyMix/100)
+                    if BTUs > 0:
+                        btu_list.append({"load_pct":load_pct,"duration":duration,"BTUs":BTUs,"CO2g":CO2g,"LoadLabel":loadlabel,"Kind":kind,"SourceType":self.sourcetypes[i],"SortOrder":sortorder})
+            #### end of loop: for i in range(0,4)
+
+            btu_list.sort(key=lambda k : k["SortOrder"] )
+
+            #kind 0:Preheat Measured, 1:Preheat Pct, 2:BBP Measured, 3:BBP Pct, 4:Cooling Measured, 5:Cooling Pct, 6:Continuous, 7:Roast Event
+            # summarize the batch metrics
+            btu_batch = btu_preheat = btu_bbp = btu_cooling = btu_roast = 0
+            co2_batch = co2_preheat = co2_bbp = co2_cooling = co2_roast = 0
+            btu_elec = btu_lpg = btu_ng = 0
+            for item in btu_list:
+                btu_batch += item['BTUs']
+                btu_preheat += item["BTUs"] if item["Kind"] in [0,1] else 0
+                btu_bbp += item["BTUs"] if item["Kind"] in [2,3] else 0
+                btu_cooling += item["BTUs"] if item["Kind"] in [4,5] else 0
+                btu_roast += item["BTUs"] if item["Kind"] in [6,7] else 0
+                co2_batch += item['CO2g']
+                co2_preheat += item["CO2g"] if item["Kind"] in [0,1] else 0
+                co2_bbp += item["CO2g"] if item["Kind"] in [2,3] else 0
+                co2_cooling += item["CO2g"] if item["Kind"] in [4,5] else 0
+                co2_roast += item["CO2g"] if item["Kind"] in [6,7] else 0
+                btu_lpg += item['BTUs'] if item["SourceType"] in [0] else 0
+                btu_ng += item['BTUs'] if item["SourceType"] in [1] else 0
+                btu_elec += item['BTUs'] if item["SourceType"] in [2] else 0
+            btu_batch = aw.float2float(btu_batch,3)
+            btu_preheat = aw.float2float(btu_preheat,3)
+            btu_bbp = aw.float2float(btu_bbp,3)
+            btu_cooling = aw.float2float(btu_cooling,3)
+            btu_roast = aw.float2float(btu_roast,3)
+            co2_batch = aw.float2float(co2_batch,3)
+            co2_preheat = aw.float2float(co2_preheat,3)
+            co2_bbp = aw.float2float(co2_bbp,3)
+            co2_cooling = aw.float2float(co2_cooling,3)
+            co2_roast = aw.float2float(co2_roast,3)
+            btu_lpg = aw.float2float(btu_lpg,3)
+            btu_ng = aw.float2float(btu_ng,3)
+            btu_elec = aw.float2float(btu_elec,3)
+            if bean_weight > 0 and co2_batch > 0:
+                co2_per_green_kg = co2_batch / bean_weight
+            else:
+                co2_per_green_kg = 0
+            co2_per_green_kg = aw.float2float(co2_per_green_kg,3)
+
+            # energymetrics
+            energymetrics["BTU_batch"] = btu_batch
+            energymetrics["CO2_batch"] = co2_batch
+            energymetrics["BTU_preheat"] = btu_preheat
+            energymetrics["CO2_preheat"] = co2_preheat
+            energymetrics["BTU_bbp"] = btu_bbp
+            energymetrics["CO2_bbp"] = co2_bbp
+            energymetrics["BTU_cooling"] = btu_cooling
+            energymetrics["CO2_cooling"] = co2_cooling
+            energymetrics["BTU_roast"] = btu_roast
+            energymetrics["CO2_roast"] = co2_roast
+            energymetrics["CO2_per_green_kg"] = co2_per_green_kg
+            energymetrics["BTU_LPG"] = btu_lpg
+            energymetrics["BTU_NG"] = btu_ng
+            energymetrics["BTU_ELEC"] = btu_elec
+            
+        except Exception as ex:
+            #import traceback
+            #traceback.print_exc(file=sys.stdout)
+            _, _, exc_tb = sys.exc_info()
+            aw.qmc.adderror((QApplication.translate("Error Message","Exception:",None) + " calcEnergyuse() {0}").format(str(ex)),exc_tb.tb_lineno)
+        finally:
+            return energymetrics,btu_list
+        
     #used in EventRecord()
     def restorebutton_11(self):
         aw.button_11.setDisabled(False)
@@ -11770,17 +12162,27 @@ class tgraphcanvas(FigureCanvas):
             aw.qmc.adderror((QApplication.translate("Error Message","Exception:",None) + " univariateinfo() {0}").format(str(e)),exc_tb.tb_lineno)
             return
 
-    def polyfit(self,xarray,yarray,deg,startindex,endindex,_=False):
+    def polyfit(self,xarray,yarray,deg,startindex,endindex,_=False,onDeltaAxis=False):
         xa = xarray[startindex:endindex]
         ya = yarray[startindex:endindex]
         if len(xa) > 0 and len(xa) == len(ya) and not all(x == 0 for x in xa) and not all(x == 0 for x in ya):
             try:
-                z = numpy.polyfit(xa,ya,deg)
+                # polyfit only over proper values (not -1, infinit or NaN)
+                c1 = [numpy.nan if x == -1 else x for x in xa]
+                c1 = numpy.array(c1,dtype='float64')
+                c2 = [numpy.nan if x == -1 else x for x in ya]
+                c2 = numpy.array(c2,dtype='float64')
+                idx = numpy.isfinite(c1) & numpy.isfinite(c2)
+                z = numpy.polyfit(c1[idx],c2[idx],deg)
                 p = numpy.poly1d(z)
                 x = p(xarray[startindex:endindex])
                 pad = max(0,len(self.timex) - startindex - len(x))
                 xx = numpy.append(numpy.append([None]*max(0,startindex), x), [None]*pad)
-                self.ax.plot(self.timex, xx, linestyle = '--', linewidth=3)
+                if onDeltaAxis:
+                    trans = self.delta_ax.transData
+                else:
+                    trans = self.ax.transData
+                self.ax.plot(self.timex, xx, linestyle = '--', linewidth=3,transform=trans)
                 with warnings.catch_warnings():
                     warnings.simplefilter("ignore")
                     self.fig.canvas.draw()
@@ -15385,12 +15787,6 @@ class ApplicationWindow(QMainWindow):
         self.GraphMenu.addAction(self.switchETBTAction)
 
         # CONFIGURATION menu
-        self.setupAction = QAction(UIconst.CONF_MENU_SETUP, self)
-        self.setupAction.setMenuRole(QAction.PreferencesRole)
-        self.setupAction.setShortcut(QKeySequence.Preferences)
-        self.setupAction.triggered.connect(self.preferences)
-        self.ConfMenu.addAction(self.setupAction)
-        
         self.machineMenu = QMenu(UIconst.CONF_MENU_MACHINE) # self.ConfMenu.addMenu(UIconst.CONF_MENU_MACHINE) done in populateMachineMenu/populateListMenu if not empty
         self.populateMachineMenu()
 
@@ -17389,8 +17785,7 @@ class ApplicationWindow(QMainWindow):
         self.slider1.valueChanged.connect(self.slider1valueChanged)
         self.slider1.actionTriggered.connect(self.slider1actionTriggered)
         self.slider1.setFocusPolicy(Qt.StrongFocus) # ClickFocus TabFocus StrongFocus
-
-
+        
         self.slider2 = self.slider()
         self.sliderLCD2 = self.sliderLCD()
         self.sliderLCD2.setStyleSheet("font-weight: bold; color: %s;"%self.qmc.EvalueColor[1])
@@ -17567,6 +17962,7 @@ class ApplicationWindow(QMainWindow):
             string += QApplication.translate("Message","The Artisan Team", None)
             QMessageBox.information(aw,QApplication.translate("Message","One time message about ArtisanViewer", None),string)
             settings.setValue("Mode",self.qmc.mode)  #prevent this popup in case a second instance is started before this first one is closed.
+
 
         # we connect the signals
         self.singleShotPhidgetsPulseOFF.connect(self.processSingleShotPhidgetsPulse)
@@ -18376,51 +18772,55 @@ class ApplicationWindow(QMainWindow):
             if reply == QMessageBox.Cancel:
                 return
             elif reply == QMessageBox.Yes:
-                aw.qmc.etypes = aw.qmc.etypesdefault
-                aw.loadSettings(fn=action.data()[0],remember=False,machine=True)
-                aw.sendmessage(QApplication.translate("Message","Artisan configured for {0}",None).format(label))
+                org_etypes = self.qmc.etypes
+                self.qmc.etypes = self.qmc.etypesdefault
+                self.loadSettings(fn=action.data()[0],remember=False,machine=True)
                 if action.data()[1] == "Phidget":
                     if action.text() == "VINT Ambient Modules":
                         elevation,res = QInputDialog.getInt(self,
                             QApplication.translate("Message", "Ambient",None),
-                            QApplication.translate("Message", "Elevation (MASL)",None),value=aw.qmc.elevation)
+                            QApplication.translate("Message", "Elevation (MASL)",None),value=self.qmc.elevation)
                         if res:
                             try:
-                                aw.qmc.elevation = int(elevation)
+                                self.qmc.elevation = int(elevation)
                             except:
                                 pass
                         else:
-                            aw.sendmessage(QApplication.translate("Message","Action canceled",None))
+                            self.sendmessage(QApplication.translate("Message","Action canceled",None))
                     else:
-                        aw.qmc.machinesetup = action.text()
+                        self.qmc.machinesetup = action.text()
                 else:
-                    aw.establish_etypes()
-                    aw.qmc.machinesetup = action.text()
-                    if aw.qmc.device == 29 and aw.modbus.type in [3,4]: # MODBUS TCP or UDP
+                    # keep original information to Cancel
+                    org_device = self.qmc.device
+                    org_machinesetup = self.qmc.machinesetup
+                    org_modbus_host = self.modbus.host
+                    org_s7_host = self.s7.host
+                    org_ws_host = self.ws.host
+                    org_comport = self.ser.comport
+                    org_roastersize_setup = self.qmc.roastersize_setup
+                    org_roastersize = self.qmc.roastersize
+                    #
+                    self.qmc.machinesetup = action.text()
+                    res = False
+                    if self.qmc.device == 29 and self.modbus.type in [3,4]: # MODBUS TCP or UDP
                         host,res = QInputDialog.getText(self,
                             QApplication.translate("Message", "Machine",None),
-                            QApplication.translate("Message", "Network name or IP address",None),text=aw.modbus.host) #"127.0.0.1"
+                            QApplication.translate("Message", "Network name or IP address",None),text=self.modbus.host) #"127.0.0.1"
                         if res:
-                            aw.modbus.host = host
-                        else:
-                            aw.sendmessage(QApplication.translate("Message","Action canceled",None))
-                    elif aw.qmc.device == 79: # S7
+                            self.modbus.host = host
+                    elif self.qmc.device == 79: # S7
                         host,res = QInputDialog.getText(self,
                             QApplication.translate("Message", "Machine",None),
-                            QApplication.translate("Message", "Network name or IP address",None),text=aw.s7.host) #"127.0.0.1"
+                            QApplication.translate("Message", "Network name or IP address",None),text=self.s7.host) #"127.0.0.1"
                         if res:
-                            aw.s7.host = host
-                        else:
-                            aw.sendmessage(QApplication.translate("Message","Action canceled",None))
-                    elif aw.qmc.device == 111: # WebSocket
+                            self.s7.host = host
+                    elif self.qmc.device == 111: # WebSocket
                         host,res = QInputDialog.getText(self,
                             QApplication.translate("Message", "Machine",None),
-                            QApplication.translate("Message", "Network name or IP address",None),text=aw.ws.host) #"127.0.0.1"
+                            QApplication.translate("Message", "Network name or IP address",None),text=self.ws.host) #"127.0.0.1"
                         if res:
-                            aw.ws.host = host
-                        else:
-                            aw.sendmessage(QApplication.translate("Message","Action canceled",None))
-                    elif aw.qmc.device in [0,9,19,53,101,115] or (aw.qmc.device == 29 and aw.modbus.type in [0,1,2]): # Fuji, Center301, TC4, Hottop, Behmor or MODBUS serial
+                            self.ws.host = host
+                    elif self.qmc.device in [0,9,19,53,101,115] or (self.qmc.device == 29 and self.modbus.type in [0,1,2]): # Fuji, Center301, TC4, Hottop, Behmor or MODBUS serial
                         import serial.tools.list_ports
                         comports = [(cp if isinstance(cp, (list, tuple)) else [cp.device, cp.product, None]) for cp in serial.tools.list_ports.comports()]
                         if platf == 'Darwin':
@@ -18429,16 +18829,16 @@ class ApplicationWindow(QMainWindow):
                             ports = list(filter (lambda x: 'Bluetooth-Inc' not in x[0],ports))
                         else:
                             ports = list(comports)
-                        if aw.ser.comport not in [p[0] for p in ports]:
-                            ports.append([aw.ser.comport,"",""])
+                        if self.ser.comport not in [p[0] for p in ports]:
+                            ports.append([self.ser.comport,"",""])
                         ports = sorted(ports,key=lambda p: p[0])
                         items = [(p[1] if (p[1] and p[1]!="n/a") else p[0]) for p in ports]
                         current = 0
                         try:
-                            current = [p[0] for p in ports].index(aw.ser.comport)
+                            current = [p[0] for p in ports].index(self.ser.comport)
                         except Exception:
                             pass
-                        if aw.qmc.device == 53: # Hottop 2k+
+                        if self.qmc.device == 53: # Hottop 2k+
                             try:
                                 current = [p[0] for p in ports].index("FT230X Basic UART")
                             except Exception:
@@ -18452,12 +18852,38 @@ class ApplicationWindow(QMainWindow):
                         if res:
                             try:
                                 pos = items.index(port_name)
-                                if aw.qmc.device == 29: # MODBUS serial
-                                    aw.modbus.comport = ports[pos][0]
+                                if self.qmc.device == 29: # MODBUS serial
+                                    self.modbus.comport = ports[pos][0]
                                 else: # Fuji or HOTTOP
-                                    aw.ser.comport = ports[pos][0]
+                                    self.ser.comport = ports[pos][0]
                             except:
                                 pass
+                    if res:
+                        batchsize,res = QInputDialog.getDouble(self, 
+                            QApplication.translate("Message", "Machine",None),
+                            QApplication.translate("Message", "Machine Capacity (kg)",None),
+                            0, # value
+                            0, # min
+                            999, # max
+                            1) # decimals
+                        if res:
+                            self.qmc.roastersize_setup = self.qmc.roastersize = batchsize
+                    if res:
+                        self.sendmessage(QApplication.translate("Message","Artisan configured for {0}",None).format(label))
+                    else:
+                        # reset
+                        self.qmc.etypes= org_etypes
+                        self.qmc.device = org_device
+                        self.qmc.machinesetup = org_machinesetup
+                        self.modbus.host = org_modbus_host
+                        self.s7.host = org_s7_host
+                        self.ws.host = org_ws_host
+                        self.ser.comport = org_comport
+                        self.qmc.roastersize_setup = org_roastersize_setup
+                        self.qmc.roastersize = org_roastersize
+                        #
+                        self.sendmessage(QApplication.translate("Message","Action canceled",None))
+                    self.establish_etypes()
 
 
     def populateThemeMenu(self):
@@ -18758,6 +19184,9 @@ class ApplicationWindow(QMainWindow):
 
     def updateCanvasColors(self):
         canvas_color = aw.qmc.palette["canvas"]
+        if canvas_color is not None and canvas_color != "None" and not QColor.isValidColor(canvas_color):
+            # we re-initalize broken canvas color
+            canvas_color = aw.qmc.palette["canvas"] = '#F8F8F8'
         try:
             if str(canvas_color) == 'None' and sys.platform.startswith("darwin"):
                 if darkdetect.isDark() and appFrozen():
@@ -18783,7 +19212,7 @@ class ApplicationWindow(QMainWindow):
                     aw.qmc.delta_ax.yaxis.get_label().set_color(aw.qmc.palette["ylabel"])
                 aw.qmc.ax.xaxis.get_label().set_color(aw.qmc.palette["xlabel"])
                 aw.qmc.ax.yaxis.get_label().set_color(aw.qmc.palette["ylabel"])
-        except:
+        except: 
             pass
 
         title_color = aw.qmc.palette["title"]
@@ -22788,7 +23217,6 @@ class ApplicationWindow(QMainWindow):
         self.temperatureMenu.setEnabled(True)
         self.temperatureConfMenu.setEnabled(True)
         self.languageMenu.setEnabled(True)
-        self.setupAction.setEnabled(True)
         self.deviceAction.setEnabled(True)
         self.commportAction.setEnabled(True)
         self.hudAction.setEnabled(True)
@@ -22855,7 +23283,6 @@ class ApplicationWindow(QMainWindow):
         self.switchETBTAction.setEnabled(False)
         # CONFIG menu
         if not compare:
-            self.setupAction.setEnabled(False)
             self.machineMenu.setEnabled(False)
             self.deviceAction.setEnabled(False)
             self.commportAction.setEnabled(False)
@@ -22954,8 +23381,9 @@ class ApplicationWindow(QMainWindow):
                 elif key == 72:                       #H
                     if not aw.qmc.designerflag:
                         if alt_modifier and platf != 'Windows' or ((control_shift_modifier or control_alt_modifier) and platf == 'Windows'): #control_alt_modifier here for backward compatibility only, see note above
-                            aw.deleteBackground()
-                            aw.qmc.redraw()
+                            self.deleteBackground()
+                            self.autoAdjustAxis()
+                            self.qmc.redraw()
                         else:
                             self.filename = aw.ArtisanOpenFileDialog(msg=QApplication.translate("Message","Load Background",None),ext_alt=".alog")
                             if len(self.filename) != 0:
@@ -22964,9 +23392,10 @@ class ApplicationWindow(QMainWindow):
                                     aw.loadbackground(self.filename)
                                 except:
                                     pass
-                                aw.qmc.background = True
-                                aw.qmc.timealign(redraw=False)
-                                aw.qmc.redraw()
+                                self.qmc.background = True
+                                self.autoAdjustAxis()
+                                self.qmc.timealign(redraw=False)
+                                self.qmc.redraw()
                 elif key == 75:                       #K
                     if not aw.qmc.flagon:
                         if control_alt_modifier:
@@ -23552,6 +23981,18 @@ class ApplicationWindow(QMainWindow):
                 ("hour", self.qmc.roastdate.toString("hh")),
                 ("minute", self.qmc.roastdate.toString("mm")),
                 ("currtime", currtime),
+                #  Energy Use
+                ("btubatch", str(cp["BTU_batch"]) if "BTU_batch" in cp else "0.0"),
+                ("co2batch", str(cp["CO2_batch"]) if "CO2_batch" in cp else "0.0"),
+                ("btupreheat", str(cp["BTU_preheat"]) if "BTU_preheat" in cp else "0.0"),
+                ("co2preheat", str(cp["CO2_preheat"]) if "CO2_preheat" in cp else "0.0"),
+                ("btubbp", str(cp["BTU_bbp"]) if "BTU_bbp" in cp else "0.0"),
+                ("co2bbp", str(cp["CO2_bbp"]) if "CO2_bbp" in cp else "0.0"),
+                #("btucooling", str(cp["BTU_cooling"]) if "BTU_cooling" in cp else "0.0"),
+                #("co2cooling", str(cp["CO2_cooling"]) if "CO2_cooling" in cp else "0.0"),
+                ("bturoast", str(cp["BTU_roast"]) if "BTU_roast" in cp else "0.0"),
+                ("co2roast", str(cp["CO2_roast"]) if "CO2_roast" in cp else "0.0"),
+                ("co2pergreenkg", str(cp["CO2_per_green_kg"]) if "CO2_per_green_kg" in cp else "0.0"),
                 ]
     
             _ignorecase = re.IGNORECASE  # @UndefinedVariable
@@ -23989,6 +24430,7 @@ class ApplicationWindow(QMainWindow):
 
                 #check colors
                 self.checkColors(self.getcolorPairsToCheck())
+        
         except IOError as ex:
             #import traceback
             #traceback.print_exc(file=sys.stdout)
@@ -24087,6 +24529,40 @@ class ApplicationWindow(QMainWindow):
             self.pidcontrol.svBeeps = [bool(x) for x in profile["svBeeps"]]
         if "svDescriptions" in profile:
             self.pidcontrol.svDescriptions = [str(x) for x in profile["svDescriptions"]]
+
+    def loadEnergyFromProfile(self,profile):
+        if "loadlabels" in profile:
+            self.qmc.loadlabels = [str(x) for x in profile["loadlabels"]]
+        if "loadratings" in profile:
+            self.qmc.loadratings = [int(x) for x in profile["loadratings"]]
+        if "ratingunits" in profile:
+            self.qmc.ratingunits = [int(x) for x in profile["ratingunits"]]
+        if "sourcetypes" in profile:
+            self.qmc.sourcetypes = [int(x) for x in profile["sourcetypes"]]
+        if "load_etypes" in profile:
+            self.qmc.load_etypes = [int(x) for x in profile["load_etypes"]]
+        if "presssure_percents" in profile:
+            self.qmc.presssure_percents = [int(x) for x in profile["presssure_percents"]]
+        if "loadevent_zeropcts" in profile:
+            self.qmc.loadevent_zeropcts = [int(x) for x in profile["loadevent_zeropcts"]]
+        if "loadevent_hundpcts" in profile:
+            self.qmc.loadevent_hundpcts = [int(x) for x in profile["loadevent_hundpcts"]]
+        if "preheatDuration" in profile:
+            self.qmc.preheatDuration = profile["preheatDuration"]
+        if "preheatenergies" in profile:
+            self.qmc.preheatenergies = [float(x) for x in profile["preheatenergies"]]
+        if "betweenbatchDuration" in profile:
+            self.qmc.betweenbatchDuration = profile["betweenbatchDuration"]
+        if "betweenbatchenergies" in profile:
+            self.qmc.betweenbatchenergies = [float(x) for x in profile["betweenbatchenergies"]]
+        if "coolingDuration" in profile:
+            self.qmc.coolingDuration = profile["coolingDuration"]
+        if "coolingenergies" in profile:
+            self.qmc.coolingenergies = [float(x) for x in profile["coolingenergies"]]
+        if "betweenbatch_after_preheat" in profile:
+            self.qmc.betweenbatch_after_preheat = profile["betweenbatch_after_preheat"]
+        if "electricEnergyMix" in profile:
+            self.qmc.electricEnergyMix = profile["electricEnergyMix"]
 
     # returns True if data got updated, False otherwise
     def updateSymbolicETBT(self):
@@ -24201,6 +24677,7 @@ class ApplicationWindow(QMainWindow):
     @pyqtSlot()
     def clearbackgroundRedraw(self):
         self.deleteBackground()
+        self.autoAdjustAxis()
         self.qmc.redraw()
 
     @pyqtSlot(str)
@@ -24217,6 +24694,7 @@ class ApplicationWindow(QMainWindow):
                 self.qmc.resetlinecountcaches()
                 self.loadbackground(filename)
                 self.qmc.background = True
+                self.autoAdjustAxis()
                 self.qmc.timealign(redraw=True)
             except:
                 self.deleteBackground() # delete a loaded background if any
@@ -26242,6 +26720,10 @@ class ApplicationWindow(QMainWindow):
             # Ramp/Soak Profiles
             if self.pidcontrol.loadRampSoakFromProfile:
                 self.loadRampSoakFromProfile(filename,profile)
+
+            # Energy
+            self.loadEnergyFromProfile(profile)
+
             if "timeindex" in profile:
                 self.qmc.timeindex = [max(0,v) if i>0 else max(-1,v) for i,v in enumerate(profile["timeindex"])]
                 if self.qmc.locktimex:
@@ -26575,6 +27057,41 @@ class ApplicationWindow(QMainWindow):
                 computedProfile["dbt"] = dbt
         except Exception:
             pass
+        ######### Energy Use #########
+        try:
+            energymetrics,_ = self.qmc.calcEnergyuse()
+            if "BTU_batch" in energymetrics:
+                computedProfile["BTU_batch"] = self.float2float(energymetrics["BTU_batch"],1)
+            if "CO2_batch" in energymetrics:
+                computedProfile["CO2_batch"] = self.float2float(energymetrics["CO2_batch"],1)
+            if "BTU_preheat" in energymetrics:
+                computedProfile["BTU_preheat"] = self.float2float(energymetrics["BTU_preheat"],1)
+            if "CO2_preheat" in energymetrics:
+                computedProfile["CO2_preheat"] = self.float2float(energymetrics["CO2_preheat"],1)
+            if "BTU_bbp" in energymetrics:
+                computedProfile["BTU_bbp"] = self.float2float(energymetrics["BTU_bbp"],1)
+            if "CO2_bbp" in energymetrics:
+                computedProfile["CO2_bbp"] = self.float2float(energymetrics["CO2_bbp"],1)
+            if "BTU_cooling" in energymetrics:
+                computedProfile["BTU_cooling"] = self.float2float(energymetrics["BTU_cooling"],1)
+            if "CO2_cooling" in energymetrics:
+                computedProfile["CO2_cooling"] = self.float2float(energymetrics["CO2_cooling"],1)
+            if "BTU_roast" in energymetrics:
+                computedProfile["BTU_roast"] = self.float2float(energymetrics["BTU_roast"],1)
+            if "CO2_roast" in energymetrics:
+                computedProfile["CO2_roast"] = self.float2float(energymetrics["CO2_roast"],1)
+            if "CO2_per_green_kg" in energymetrics:
+                computedProfile["CO2_per_green_kg"] = self.float2float(energymetrics["CO2_per_green_kg"],1)
+            if "BTU_LPG" in energymetrics:
+                computedProfile["BTU_LPG"] = self.float2float(energymetrics["BTU_LPG"],1)
+            if "BTU_NG" in energymetrics:
+                computedProfile["BTU_NG"] = self.float2float(energymetrics["BTU_NG"],1)
+            if "BTU_ELEC" in energymetrics:
+                computedProfile["BTU_ELEC"] = self.float2float(energymetrics["BTU_ELEC"],1)
+
+        except Exception as ex:
+            _, _, exc_tb = sys.exc_info()
+            aw.qmc.adderror((QApplication.translate("Error Message", "Exception:",None) + " computedProfileInformation() {0}").format(str(ex)),exc_tb.tb_lineno)
         ######### RETURN #########
         return computedProfile
 
@@ -26766,6 +27283,30 @@ class ApplicationWindow(QMainWindow):
                     profile["legendloc_pos"] = axis_to_data.transform(self.qmc.legend._loc).tolist()
                 except:
                     pass
+
+            # Energy Settings  
+            try:
+                profile["loadlabels"] = self.qmc.loadlabels
+                profile["loadratings"] = self.qmc.loadratings
+                profile["ratingunits"] = self.qmc.ratingunits
+                profile["sourcetypes"] = self.qmc.sourcetypes
+                profile["load_etypes"] = self.qmc.load_etypes
+                profile["presssure_percents"] = self.qmc.presssure_percents
+                profile["loadevent_zeropcts"] = self.qmc.loadevent_zeropcts
+                profile["loadevent_hundpcts"] = self.qmc.loadevent_hundpcts
+                profile["preheatDuration"] = self.qmc.preheatDuration
+                profile["preheatenergies"] = self.qmc.preheatenergies
+                profile["betweenbatchDuration"] = self.qmc.betweenbatchDuration
+                profile["betweenbatchenergies"] = self.qmc.betweenbatchenergies
+                profile["coolingDuration"] = self.qmc.coolingDuration
+                profile["coolingenergies"] = self.qmc.coolingenergies
+                profile["betweenbatch_after_preheat"] = self.qmc.betweenbatch_after_preheat
+                profile["electricEnergyMix"] = self.qmc.electricEnergyMix
+            except Exception as ex:
+                _, _, exc_tb = sys.exc_info()
+                aw.qmc.adderror((QApplication.translate("Error Message", "Exception:",None) + " getProfile(): {0}").format(str(ex)),exc_tb.tb_lineno)
+
+
             return profile
         except Exception as ex:
             _, _, exc_tb = sys.exc_info()
@@ -27277,7 +27818,7 @@ class ApplicationWindow(QMainWindow):
                 self.qmc.phidget1045_async = bool(toBool(settings.value("phidget1045_async",self.qmc.phidget1045_async)))
                 self.qmc.phidget1045_changeTrigger = aw.float2float(toFloat(settings.value("phidget1045_changeTrigger",self.qmc.phidget1045_changeTrigger)))
             if settings.contains("phidget1045_emissivity"):
-                self.qmc.phidget1045_emissivity = toDouble(settings.value("phidget1045_emissivity",self.qmc.phidget1045_emissivity))
+                self.qmc.phidget1045_emissivity = toFloat(settings.value("phidget1045_emissivity",self.qmc.phidget1045_emissivity))
             if settings.contains("phidget1045_dataRate"):
                 self.qmc.phidget1045_dataRate = toInt(settings.value("phidget1045_dataRate",self.qmc.phidget1045_dataRate))
             if settings.contains("phidget1200_formula"):
@@ -27317,7 +27858,7 @@ class ApplicationWindow(QMainWindow):
                 self.qmc.yoctoRemoteFlag = bool(toBool(settings.value("yoctoRemoteFlag",self.qmc.yoctoRemoteFlag)))
                 self.qmc.yoctoServerID = toString(settings.value("yoctoServerID",self.qmc.yoctoServerID))
             if settings.contains("YOCTO_emissivity"):
-                self.qmc.YOCTO_emissivity = toDouble(settings.value("YOCTO_emissivity",self.qmc.YOCTO_emissivity))
+                self.qmc.YOCTO_emissivity = toFloat(settings.value("YOCTO_emissivity",self.qmc.YOCTO_emissivity))
             if settings.contains("YOCTO_async"):
                 self.qmc.YOCTO_async = [bool(toBool(x)) for x in toList(settings.value("YOCTO_async",self.qmc.YOCTO_async))]
             if settings.contains("YOCTO_dataRate"):
@@ -27437,7 +27978,7 @@ class ApplicationWindow(QMainWindow):
                 aw.updateSliderColors()
             if settings.contains("Evaluelinethickness"):
                 self.qmc.Evaluelinethickness = [toInt(x) for x in toList(settings.value("Evaluelinethickness",self.qmc.Evaluelinethickness))]
-                self.qmc.Evaluealpha = [toDouble(x) for x in toList(settings.value("Evaluealpha",self.qmc.Evaluealpha))]
+                self.qmc.Evaluealpha = [toFloat(x) for x in toList(settings.value("Evaluealpha",self.qmc.Evaluealpha))]
             if settings.contains("EvalueMarkerSize"):
                 self.qmc.EvalueMarkerSize = [toInt(x) for x in toList(settings.value("EvalueMarkerSize",self.qmc.EvalueMarkerSize))]
             if settings.contains("specialeventannotations"):
@@ -27950,9 +28491,9 @@ class ApplicationWindow(QMainWindow):
                 aw.sliderSV.blockSignals(False)
 
                 aw.pidcontrol.activateSVSlider(aw.pidcontrol.svSlider)
-                aw.pidcontrol.pidKp = toDouble(settings.value("pidKp",aw.pidcontrol.pidKp))
-                aw.pidcontrol.pidKi = toDouble(settings.value("pidKi",aw.pidcontrol.pidKi))
-                aw.pidcontrol.pidKd = toDouble(settings.value("pidKd",aw.pidcontrol.pidKd))
+                aw.pidcontrol.pidKp = toFloat(settings.value("pidKp",aw.pidcontrol.pidKp))
+                aw.pidcontrol.pidKi = toFloat(settings.value("pidKi",aw.pidcontrol.pidKi))
+                aw.pidcontrol.pidKd = toFloat(settings.value("pidKd",aw.pidcontrol.pidKd))
                 aw.pidcontrol.pidSource = toInt(settings.value("pidSource",aw.pidcontrol.pidSource))
                 aw.pidcontrol.pidCycle = toInt(settings.value("pidCycle",aw.pidcontrol.pidCycle))
                 if settings.contains("pidPositiveTarget"):
@@ -27991,14 +28532,14 @@ class ApplicationWindow(QMainWindow):
             settings.beginGroup("PXR")
             for key in list(self.fujipid.PXR.keys()):
                 if type(self.fujipid.PXR[key][0]) == type(float()):
-                    self.fujipid.PXR[key][0] = toDouble(settings.value(key,self.fujipid.PXR[key][0]))
+                    self.fujipid.PXR[key][0] = toFloat(settings.value(key,self.fujipid.PXR[key][0]))
                 elif type(self.fujipid.PXR[key][0]) == type(int()):
                     self.fujipid.PXR[key][0] = toInt(settings.value(key,self.fujipid.PXR[key][0]))
             settings.endGroup()
             settings.beginGroup("PXG4")
             for key in list(self.fujipid.PXG4.keys()):
                 if type(self.fujipid.PXG4[key][0]) == type(float()):
-                    self.fujipid.PXG4[key][0] = toDouble(settings.value(key,self.fujipid.PXG4[key][0]))
+                    self.fujipid.PXG4[key][0] = toFloat(settings.value(key,self.fujipid.PXG4[key][0]))
                 elif type(self.fujipid.PXG4[key][0]) == type(int()):
                     self.fujipid.PXG4[key][0] = toInt(settings.value(key,self.fujipid.PXG4[key][0]))
 
@@ -28013,7 +28554,7 @@ class ApplicationWindow(QMainWindow):
                 settings.beginGroup("deltaDTA")
                 for key in list(self.dtapid.dtamem.keys()):
                     if type(self.dtapid.dtamem[key][0]) == type(float()):
-                        self.dtapid.dtamem[key][0] = toDouble(settings.value(key,self.dtapid.dtamem[key][0]))
+                        self.dtapid.dtamem[key][0] = toFloat(settings.value(key,self.dtapid.dtamem[key][0]))
                     elif type(self.dtapid.dtamem[key][0]) == type(int()):
                         self.dtapid.dtamem[key][0] = toInt(settings.value(key,self.dtapid.dtamem[key][0]))
                 settings.endGroup()
@@ -28024,7 +28565,7 @@ class ApplicationWindow(QMainWindow):
             if settings.contains("dropDuplicates"):
                 self.qmc.dropDuplicates = bool(toBool(settings.value("dropDuplicates",self.qmc.dropDuplicates)))
             if settings.contains("dropDuplicatesLimit"):
-                self.qmc.dropDuplicatesLimit = toDouble(settings.value("dropDuplicatesLimit",self.qmc.dropDuplicatesLimit))
+                self.qmc.dropDuplicatesLimit = toFloat(settings.value("dropDuplicatesLimit",self.qmc.dropDuplicatesLimit))
             if settings.contains("optimalSmoothing"):
                 self.qmc.optimalSmoothing = bool(toBool(settings.value("optimalSmoothing",self.qmc.optimalSmoothing)))
             if settings.contains("polyfitRoRcalc"):
@@ -28183,9 +28724,51 @@ class ApplicationWindow(QMainWindow):
             if settings.contains("roastertype_setup"):
                 self.qmc.roastertype_setup = toString(settings.value("roastertype_setup",self.qmc.roastertype_setup))
             if settings.contains("roastersize_setup"):
-                self.qmc.roastersize_setup = toDouble(settings.value("roastersize_setup",self.qmc.roastersize_setup))
+                self.qmc.roastersize_setup = toFloat(settings.value("roastersize_setup",self.qmc.roastersize_setup))
             if settings.contains("drumspeed_setup"):
                 self.qmc.drumspeed_setup = toString(settings.value("drumspeed_setup",self.qmc.drumspeed_setup))
+            
+            settings.beginGroup("EnergyUse")
+            if settings.contains("loadlabels_setup"):
+                self.qmc.loadlabels_setup = [toString(x) for x in toList(settings.value("loadlabels_setup"))]
+            if settings.contains("loadratings_setup"):
+                self.qmc.loadratings_setup = [toInt(x) for x in toList(settings.value("loadratings_setup"))]
+            if settings.contains("ratingunits_setup"):
+                self.qmc.ratingunits_setup = [toInt(x) for x in toList(settings.value("ratingunits_setup"))]
+            if settings.contains("sourcetypes_setup"):
+                self.qmc.sourcetypes_setup = [toInt(x) for x in toList(settings.value("sourcetypes_setup"))]
+            if settings.contains("load_etypes_setup"):
+                self.qmc.load_etypes_setup = [toInt(x) for x in toList(settings.value("load_etypes_setup"))]
+            if settings.contains("presssure_percents_setup"):
+                self.qmc.presssure_percents_setup = [bool(toBool(x)) for x in toList(settings.value("presssure_percents_setup"))]
+            if settings.contains("loadevent_zeropcts_setup"):
+                self.qmc.loadevent_zeropcts_setup = [toInt(x) for x in toList(settings.value("loadevent_zeropcts_setup"))]
+            if settings.contains("loadevent_hundpcts_setup"):
+                self.qmc.loadevent_hundpcts_setup = [toInt(x) for x in toList(settings.value("loadevent_hundpcts_setup"))]
+            if settings.contains("preheatDuration_setup"):
+                self.qmc.preheatDuration_setup = toInt(settings.value("preheatDuration_setup",self.qmc.preheatDuration_setup))
+            if settings.contains("preheatenergies_setup"):
+                self.qmc.preheatenergies_setup = [toFloat(x) for x in toList(settings.value("preheatenergies_setup"))]
+            if settings.contains("betweenbatchDuration_setup"):
+                self.qmc.betweenbatchDuration_setup = toInt(settings.value("betweenbatchDuration_setup",self.qmc.betweenbatchDuration_setup))
+            if settings.contains("betweenbatchenergies_setup"):
+                self.qmc.betweenbatchenergies_setup = [toFloat(x) for x in toList(settings.value("betweenbatchenergies_setup"))]
+            if settings.contains("coolingDuration_setup"):
+                self.qmc.coolingDuration_setup = toInt(settings.value("coolingDuration_setup",self.qmc.coolingDuration_setup))
+            if settings.contains("coolingenergies_setup"):
+                self.qmc.coolingenergies_setup = [toFloat(x) for x in toList(settings.value("coolingenergies_setup"))]
+            if settings.contains("betweenbatch_after_preheat_setup"):
+                self.qmc.betweenbatch_after_preheat_setup = bool(toBool(settings.value("betweenbatch_after_preheat_setup",self.qmc.betweenbatch_after_preheat_setup)))
+            if settings.contains("electricEnergyMix_setup"):
+                self.qmc.electricEnergyMix_setup = toInt(settings.value("electricEnergyMix_setup",self.qmc.electricEnergyMix_setup))
+            if settings.contains("energyresultunit_setup"):
+                self.qmc.energyresultunit_setup = toInt(settings.value("energyresultunit_setup",self.qmc.energyresultunit_setup))
+#            if settings.contains("energytablecolumnwidths"):
+#                self.qmc.energytablecolumnwidths = [toInt(x) for x in toList(settings.value("energytablecolumnwidths",self.qmc.energytablecolumnwidths))]
+            settings.endGroup()
+            self.qmc.restoreEnergyLoadDefaults()
+            self.qmc.restoreEnergyProtocolDefaults()          
+            
             settings.beginGroup("RoastProperties")
             # copy setup from pre v1.4.6 RoastProperties organization,operator,roastertype,roastersize
             if self.qmc.organization_setup == "" and settings.contains("organization"):
@@ -28195,7 +28778,7 @@ class ApplicationWindow(QMainWindow):
             if self.qmc.roastertype_setup == "" and settings.contains("roastertype"):
                 self.qmc.roastertype_setup = toString(settings.value("roastertype",self.qmc.roastertype_setup))
             if self.qmc.roastersize_setup == 0 and settings.contains("roastersize"):
-                self.qmc.roastersize_setup = toDouble(settings.value("roastersize",self.qmc.roastersize_setup))
+                self.qmc.roastersize_setup = toFloat(settings.value("roastersize",self.qmc.roastersize_setup))
             if self.qmc.drumspeed_setup == "" and settings.contains("drumspeed"):
                 self.qmc.drumspeed_setup = toString(settings.value("drumspeed",self.qmc.drumspeed_setup))
             # initialize profile setup values
@@ -28207,10 +28790,9 @@ class ApplicationWindow(QMainWindow):
             #
             if settings.contains("machinesetup"):
                 self.qmc.machinesetup = toString(settings.value("machinesetup",self.qmc.machinesetup))
-            self.qmc.drumspeed = toString(settings.value("drumspeed",self.qmc.drumspeed))
-#            self.qmc.density[2] = toDouble(settings.value("densitySampleVolume",self.qmc.density[2])) # fixed to 1l now
+#            self.qmc.density[2] = toFloat(settings.value("densitySampleVolume",self.qmc.density[2])) # fixed to 1l now
             if settings.contains("beansize"):
-                self.qmc.beansize = toDouble(settings.value("beansize",self.qmc.beansize))
+                self.qmc.beansize = toFloat(settings.value("beansize",self.qmc.beansize))
             if settings.contains("beansize_min"):
                 self.qmc.beansize_min = toInt(settings.value("beansize_min",self.qmc.beansize_min))
             if settings.contains("beansize_max"):
@@ -28381,7 +28963,7 @@ class ApplicationWindow(QMainWindow):
                     self.extraser[i].timeout = self.extratimeout[i]
             settings.endGroup()
             if settings.contains("ChannelTares"):
-                self.channel_tare_values = [toDouble(x) for x in toList(settings.value("ChannelTares",self.channel_tare_values))]
+                self.channel_tare_values = [toFloat(x) for x in toList(settings.value("ChannelTares",self.channel_tare_values))]
             if settings.contains("BTfunction"):
                 self.qmc.BTfunction = s2a(toString(settings.value("BTfunction",self.qmc.BTfunction)))
             if settings.contains("ETfunction"):
@@ -28413,7 +28995,7 @@ class ApplicationWindow(QMainWindow):
                 self.qmc.gridthickness = toInt(settings.value("gridthickness",self.qmc.gridthickness))
 #                self.qmc.xrotation = toInt(settings.value("xrotation",self.qmc.xrotation))
                 self.qmc.gridlinestyle = toInt(settings.value("gridlinestyle",self.qmc.gridlinestyle))
-                self.qmc.gridalpha = toDouble(settings.value("gridalpha",self.qmc.gridalpha))
+                self.qmc.gridalpha = toFloat(settings.value("gridalpha",self.qmc.gridalpha))
             settings.endGroup()
             if settings.contains("titleshowalways"):
                 self.qmc.title_show_always = bool(toBool(settings.value("titleshowalways",aw.qmc.title_show_always)))
@@ -28431,8 +29013,8 @@ class ApplicationWindow(QMainWindow):
                 self.eventslidervisibilities = [toInt(x) for x in toList(settings.value("slidervisibilities",self.eventslidervisibilities))]
                 self.eventslideractions = [toInt(x) for x in toList(settings.value("slideractions",self.eventslideractions))]
                 self.eventslidercommands = list(map(str,list(toStringList(settings.value("slidercommands",self.eventslidercommands)))))
-                self.eventslideroffsets = [toDouble(x) for x in toList(settings.value("slideroffsets",self.eventslideroffsets))]
-                self.eventsliderfactors = [toDouble(x) for x in toList(settings.value("sliderfactors",self.eventsliderfactors))]
+                self.eventslideroffsets = [toFloat(x) for x in toList(settings.value("slideroffsets",self.eventslideroffsets))]
+                self.eventsliderfactors = [toFloat(x) for x in toList(settings.value("sliderfactors",self.eventsliderfactors))]
             if settings.contains("slidermin"):
                 self.eventslidermin = [toInt(x) for x in toList(settings.value("slidermin",self.eventslidermin))]
                 self.eventslidermax = [toInt(x) for x in toList(settings.value("slidermax",self.eventslidermax))]
@@ -29554,6 +30136,28 @@ class ApplicationWindow(QMainWindow):
             settings.setValue("roastertype_setup",self.qmc.roastertype_setup)
             settings.setValue("roastersize_setup",self.qmc.roastersize_setup)
             settings.setValue("drumspeed_setup",self.qmc.drumspeed_setup)
+            
+            settings.beginGroup("EnergyUse")
+            settings.setValue("loadlabels_setup",self.qmc.loadlabels_setup)
+            settings.setValue("loadratings_setup",self.qmc.loadratings_setup)
+            settings.setValue("ratingunits_setup",self.qmc.ratingunits_setup)
+            settings.setValue("sourcetypes_setup",self.qmc.sourcetypes_setup)
+            settings.setValue("load_etypes_setup",self.qmc.load_etypes_setup)
+            settings.setValue("presssure_percents_setup",self.qmc.presssure_percents_setup)
+            settings.setValue("loadevent_zeropcts_setup",self.qmc.loadevent_zeropcts_setup)
+            settings.setValue("loadevent_hundpcts_setup",self.qmc.loadevent_hundpcts_setup)
+            settings.setValue("preheatDuration_setup",self.qmc.preheatDuration_setup)
+            settings.setValue("preheatenergies_setup",self.qmc.preheatenergies_setup)
+            settings.setValue("betweenbatchDuration_setup",self.qmc.betweenbatchDuration_setup)
+            settings.setValue("betweenbatchenergies_setup",self.qmc.betweenbatchenergies_setup)
+            settings.setValue("coolingDuration_setup",self.qmc.coolingDuration_setup)
+            settings.setValue("coolingenergies_setup",self.qmc.coolingenergies_setup)
+            settings.setValue("betweenbatch_after_preheat_setup",self.qmc.betweenbatch_after_preheat_setup)
+            settings.setValue("electricEnergyMix_setup",self.qmc.electricEnergyMix_setup)
+            settings.setValue("energyresultunit_setup",self.qmc.energyresultunit_setup)
+#            settings.setValue("energytablecolumnwidths",self.qmc.energytablecolumnwidths)
+            settings.endGroup()            
+            
             settings.beginGroup("RoastProperties")
             settings.setValue("machinesetup",self.qmc.machinesetup)
 #            settings.setValue("densitySampleVolume",self.qmc.density[2]) # fixed to 1l now
@@ -30551,6 +31155,9 @@ class ApplicationWindow(QMainWindow):
     #  . "AUC": int
     #  . "color": int
     #  . "cup": int
+    #  . "energy": float in kWh
+    #  . "co2": float in g
+    #  . "co2kg": float in g
     def profileRankingData(self,profile):
         res = {}
         # temp_unit
@@ -30616,6 +31223,12 @@ class ApplicationWindow(QMainWindow):
             comp = profile["computed"]
             if "AUC" in comp:
                 res["AUC"] = comp["AUC"]
+            if "BTU_batch" in comp:
+                res["energy"] = self.qmc.convertHeat(comp["BTU_batch"],0,3)
+            if "CO2_batch" in comp:
+                res["co2"] = comp["CO2_batch"]
+            if "CO2_per_green_kg" in comp:
+                res["co2kg"] = comp["CO2_per_green_kg"]
         # color
         if "ground_color" in profile:
             res["color"] = profile["ground_color"]
@@ -30637,6 +31250,9 @@ class ApplicationWindow(QMainWindow):
     #  . "AUC"
     #  . "color"
     #  . "cupping"
+    #  . "energy"
+    #  . "co2"
+    #  . "co2kg"
     def rankingData2string(self,data,units=True):
         res = {}
         res["charge_temp_num"] = (convertTemp(data["charge_temp"],(data["temp_unit"] if units else ""),aw.qmc.mode) if "charge_temp" in data else 0)
@@ -30660,6 +31276,12 @@ class ApplicationWindow(QMainWindow):
         res["DEV_percent"] = ('{0:.1f}'.format(data["DEV_percent"]) + ("%" if units else "") if "DEV_percent" in data else "")
         res["AUC_num"] = (data["AUC"] if "AUC" in data else 0)
         res["AUC"] = (data["AUC"] if "AUC" in data else "")
+        res["energy_num"] = ('{0:.1f}'.format(data["energy"]) if "energy" in data else 0)
+        res["energy"] = ('{0:.1f}'.format(data["energy"]) + ("kWh" if units else "") if "energy" in data else "")
+        res["co2_num"] = ('{0:.1f}'.format(data["co2"]) if "co2" in data else 0)
+        res["co2"] = ('{0:.1f}'.format(data["co2"]) + ("g" if units else "") if "co2" in data else "")
+        res["co2kg_num"] = ('{0:.1f}'.format(data["co2kg"]) if "co2kg" in data else 0)
+        res["co2kg"] = ('{0:.1f}'.format(data["co2kg"]) + ("g" if units else "") if "co2kg" in data else "")
         return res
 
     def rankingdataDef(self):
@@ -30719,7 +31341,7 @@ class ApplicationWindow(QMainWindow):
             ["SCs_BT",              "comp",  "float1",   "false",  "temp",  QApplication.translate('HTML Report Template','SCs BT',None)               ],
             ["SCe_time",            "comp",  "time",     "false",  "",      QApplication.translate('HTML Report Template','SCe Time',None)             ],
             ["SCe_ET",              "comp",  "float1",   "false",  "temp",  QApplication.translate('HTML Report Template','SCe ET',None)               ],
-            ["SCe_BT",              "comp",  "float1",   "false",  "temp",  QApplication.translate('HTML Report Template','SCE BT',None)               ],
+            ["SCe_BT",              "comp",  "float1",   "false",  "temp",  QApplication.translate('HTML Report Template','SCe BT',None)               ],
             ["DROP_time",           "comp",  "time",     "false",  "",      QApplication.translate('HTML Report Template','DROP Time',None)            ],
             ["DROP_ET",             "comp",  "float1",   "false",  "temp",  QApplication.translate('HTML Report Template','DROP ET',None)              ],
             ["DROP_BT",             "comp",  "float1",   "false",  "temp",  QApplication.translate('HTML Report Template','DROP BT',None)              ],
@@ -30739,7 +31361,7 @@ class ApplicationWindow(QMainWindow):
             ["AUC",                 "comp",  "int",      "false",  "",      QApplication.translate('HTML Report Template','AUC',None)                  ],
             ["(dsd['computed']['AUCbegin'] if ('AUCbegin' in dsd['computed'] and 'AUCfromeventflag' in dsd['computed'] and dsd['computed']['AUCfromeventflag']) else '')", "eval", "text", "false", "", QApplication.translate('HTML Report Template','AUC Begin',None)  ],
             ["AUCbase",             "comp",  "float1",   "false",  "temp",  QApplication.translate('HTML Report Template','AUC Base',None)             ],
-            ["dry_phase_AUC",       "comp",  "int",      "false",  "",      QApplication.translate('HTML Report Template','Dry Phase_AUC',None)        ],
+            ["dry_phase_AUC",       "comp",  "int",      "false",  "",      QApplication.translate('HTML Report Template','Dry Phase AUC',None)        ],
             ["mid_phase_AUC",       "comp",  "int",      "false",  "",      QApplication.translate('HTML Report Template','Mid Phase AUC',None)        ],
             ["finish_phase_AUC",    "comp",  "int",      "false",  "",      QApplication.translate('HTML Report Template','Finish Phase AUC',None)     ],
             ["weightin",            "comp",  "float1",   "false",  "weight",QApplication.translate('HTML Report Template','Weight In',None)            ],
@@ -30771,6 +31393,20 @@ class ApplicationWindow(QMainWindow):
             ["scorching",           "prof",  "bool",     "false",  "",      QApplication.translate('HTML Report Template','Scorching',None)            ],
             ["divots",              "prof",  "bool",     "false",  "",      QApplication.translate('HTML Report Template','Divots',None)               ],
             ["mode",                "prof",  "text",     "false",  "",      QApplication.translate('HTML Report Template','Mode',None)                 ],
+            ["BTU_batch",           "comp",  "float1",   "false",  "(BTU)", QApplication.translate('HTML Report Template','BTU_batch',None)            ],
+            ["CO2_batch",           "comp",  "float1",   "false",  "(g)",   QApplication.translate('HTML Report Template','CO2_batch',None)            ],
+            ["BTU_preheat",         "comp",  "float1",   "false",  "(BTU)", QApplication.translate('HTML Report Template','BTU_preheat',None)          ],
+            ["CO2_preheat",         "comp",  "float1",   "false",  "(g)",   QApplication.translate('HTML Report Template','CO2_preheat',None)          ],
+            ["BTU_bbp",             "comp",  "float1",   "false",  "(BTU)", QApplication.translate('HTML Report Template','BTU_bbp',None)              ],
+            ["CO2_bbp",             "comp",  "float1",   "false",  "(g)",   QApplication.translate('HTML Report Template','CO2_bbp',None)              ],
+            ["BTU_cooling",         "comp",  "float1",   "false",  "(BTU)", QApplication.translate('HTML Report Template','BTU_cooling',None)          ],
+            ["CO2_cooling",         "comp",  "float1",   "false",  "(g)",   QApplication.translate('HTML Report Template','CO2_cooling',None)          ],
+            ["BTU_roast",           "comp",  "float1",   "false",  "(BTU)", QApplication.translate('HTML Report Template','BTU_roast',None)            ],
+            ["CO2_roast",           "comp",  "float1",   "false",  "(g)",   QApplication.translate('HTML Report Template','CO2_roast',None)            ],
+            ["CO2_per_green_kg",    "comp",  "float1",   "false",  "(g)",   QApplication.translate('HTML Report Template','CO2_per_green_kg',None)     ],
+            ["BTU_LPG",             "comp",  "float1",   "false",  "(BTU)", QApplication.translate('HTML Report Template','BTU_LPG',None)              ],
+            ["BTU_NG",              "comp",  "float1",   "false",  "(BTU)", QApplication.translate('HTML Report Template','BTU_NG',None)               ],
+            ["BTU_ELEC",            "comp",  "float1",   "false",  "(BTU)", QApplication.translate('HTML Report Template','BTU_ELEC',None)             ],
         ]
         return ranking_data_fields, field_index
 
@@ -30895,6 +31531,9 @@ class ApplicationWindow(QMainWindow):
 <td sorttable_customkey=\"$loss_num\">$weightloss</td>
 <td sorttable_customkey=\"$color_num\">$color</td>
 <td>$cupping</td>
+<td sorttable_customkey=\"$energy_num\">$energy</td>
+<td sorttable_customkey=\"$co2_num\">$co2</td>
+<td sorttable_customkey=\"$co2kg_num\">$co2kg</td>
 </tr>"""
         pd = self.productionData2string(production_data,units=False)
         rd = self.rankingData2string(ranking_data,units=False)
@@ -30947,6 +31586,12 @@ class ApplicationWindow(QMainWindow):
             color_num = str(rd["color_num"]),
             color = rd["color"],
             cupping = rd["cupping"],
+            energy = rd["energy"],
+            energy_num = rd["energy_num"],
+            co2 = rd["co2"],
+            co2_num = rd["co2_num"],
+            co2kg = rd["co2kg"],
+            co2kg_num = rd["co2kg_num"],
         )
 
     def reportFiles(self):
@@ -31010,6 +31655,12 @@ class ApplicationWindow(QMainWindow):
                 colors_count = 0
                 cuppings = 0
                 cuppings_count = 0
+                energies = 0
+                energies_count = 0
+                co2s = 0
+                co2s_count = 0
+                co2kgs = 0
+                co2kgs_count = 0
                 handles = []
                 labels = []
                 timex_list = []
@@ -31039,8 +31690,8 @@ class ApplicationWindow(QMainWindow):
                     try:
                         rd = self.profileRankingData(p)
                     except Exception as e:
-    #                        import traceback
-    #                        traceback.print_exc(file=sys.stdout)
+#                        import traceback
+#                        traceback.print_exc(file=sys.stdout)
                         _, _, exc_tb = sys.exc_info()
                         aw.qmc.adderror((QApplication.translate("Error Message","Exception (probably due to an empty profile):",None) + " rankingReport() {0}").format(str(e)),exc_tb.tb_lineno)
                         continue
@@ -31108,6 +31759,15 @@ class ApplicationWindow(QMainWindow):
                     if rd["cupping"] > 0:
                         cuppings += rd["cupping"]
                         cuppings_count += 1
+                    if "energy" in rd and rd["energy"] > 0:
+                        energies += rd["energy"]
+                        energies_count += 1
+                    if "co2" in rd and rd["co2"] > 0:
+                        co2s += rd["co2"]
+                        co2s_count += 1
+                    if "co2kg" in rd and rd["co2kg"] > 0:
+                        co2kgs += rd["co2kg"]
+                        co2kgs_count += 1
                     if len(profiles) > max_profiles:
                         entries += self.rankingData2htmlentry(pd,rd, cl) + "\n"
                     else:
@@ -31512,6 +32172,9 @@ class ApplicationWindow(QMainWindow):
                     loss_avg = ('{0:.1f}'.format(loss / loss_count) if loss_count > 0 and loss > 0 else ""),
                     colors_avg = ('{0:.1f}'.format(colors / colors_count) if colors > 0 and colors_count > 0 else ""),
                     cup_avg = ('{0:.2f}'.format(cuppings / cuppings_count) if cuppings > 0 and cuppings_count > 0 else ""),
+                    energy_avg = ('{0:.2f}'.format(energies / energies_count) if energies > 0 and energies_count > 0 else ""),
+                    co2_avg = ('{0:.2f}'.format(co2s / co2s_count) if co2s > 0 and co2s_count > 0 else ""),
+                    co2kg_avg = ('{0:.2f}'.format(co2kgs / co2kgs_count) if co2kgs > 0 and co2kgs_count > 0 else ""),
                     graph_image=graph_image,
                     graph_image_pct=graph_image_pct
                 )
@@ -31935,6 +32598,16 @@ class ApplicationWindow(QMainWindow):
                     color = color + " (" + self.qmc.color_systems[self.qmc.color_system_idx] + ")"
             else:
                 color = "--"
+            if "BTU_batch" in cp and cp["BTU_batch"]:
+                energy = "%.1fkWh"%self.qmc.convertHeat(cp["BTU_batch"],0,3)
+            else:
+                energy = "--"
+            if "CO2_batch" in cp and cp["CO2_batch"]:
+                CO2 = "%.1fg"%cp["CO2_batch"]
+                if "CO2_per_green_kg" in cp:
+                    CO2 += " ({}g/kg)".format(self.float2float(cp["CO2_per_green_kg"]))
+            else:
+                CO2 = "--"
             if "det" in cp:
                 cm = "%.1f/%.1f" % (cp["det"],cp["dbt"]) + uchr(176) + aw.qmc.mode
             else:
@@ -31995,6 +32668,10 @@ class ApplicationWindow(QMainWindow):
                 cup=str(aw.float2float(self.cuppingSum(self.qmc.flavors))),
                 color_label=QApplication.translate("HTML Report Template", "Color:", None),
                 color=color,
+                energy_label=QApplication.translate("HTML Report Template", "Energy:", None),
+                energy=energy,
+                CO2_label=QApplication.translate("HTML Report Template", "CO2:", None),
+                CO2=CO2,
                 charge_label=QApplication.translate("HTML Report Template", "CHARGE:", None),
                 charge=charge,
                 size_label=QApplication.translate("HTML Report Template", "Size:", None),
@@ -33088,11 +33765,6 @@ class ApplicationWindow(QMainWindow):
 
     @pyqtSlot()
     @pyqtSlot(bool)
-    def preferences(self,_=False):
-        preferencesDialog(self,self)
-
-    @pyqtSlot()
-    @pyqtSlot(bool)
     def deviceassigment(self,_=False):
         dialog = DeviceAssignmentDlg(self,self,self.DeviceAssignmentDlg_activeTab)
         dialog.show()
@@ -33124,7 +33796,9 @@ class ApplicationWindow(QMainWindow):
     @pyqtSlot()
     @pyqtSlot(bool)
     def calculator(self,_=False):
-        dialog = calculatorDlg(self,self)
+        #dave polyfit
+        #dialog = calculatorDlg(self,self)
+        dialog = polyhackDlg(self,self)
         dialog.setModal(False)
         dialog.show()
         QApplication.processEvents()
@@ -34556,7 +35230,12 @@ class ApplicationWindow(QMainWindow):
             if filename:
                 if extension not in filename:
                     filename += extension
-                aw.qmc.fig.savefig(filename,transparent=(aw.qmc.palette["canvas"] is None or aw.qmc.palette["canvas"]=='None'),facecolor=str(aw.qmc.palette["canvas"]),edgecolor=None) # transparent=True is need to get the delta curves and legend drawn
+                #mpl.rcParams['pdf.fonttype'] = 3   # 3 or 42
+                #mpl.rc('pdf', fonttype=3)
+                aw.qmc.fig.savefig(filename,transparent=(aw.qmc.palette["canvas"] is None or aw.qmc.palette["canvas"]=='None'),
+                        #bbox_inches='tight',
+                        #backend='pgf', # slow and fails on # characters in TeX backend
+                        facecolor=str(aw.qmc.palette["canvas"]),edgecolor=None) # transparent=True is need to get the delta curves and legend drawn
                 aw.qmc.updateBackground() # that redraw is needed to avoid the "transparent flicker"
 
                 self.sendmessage(QApplication.translate("Message","{0} saved", None).format(str(filename)))

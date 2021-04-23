@@ -88,7 +88,7 @@ class MyTableWidgetItemQTime(QTableWidgetItem):
         b = other.sortKey.time().minute() * 60 + other.sortKey.time().second()
         return a < b
 
-class MyTableWidgetItemInt(QTableWidgetItem):
+class MyTableWidgetItemNumber(QTableWidgetItem):
     __slots__ = ['sortKey'] # save some memory by using slots
     def __init__(self, text, sortKey):
         super(QTableWidgetItem,self).__init__(text, QTableWidgetItem.UserType)
@@ -96,8 +96,8 @@ class MyTableWidgetItemInt(QTableWidgetItem):
 
     #Qt uses a simple < check for sorting items, override this to use the sortKey
     def __lt__(self, other):
-        return self.sortKey < other.sortKey 
-        
+        return self.sortKey < other.sortKey
+  
 class MyTableWidgetItemQCheckBox(QTableWidgetItem):
     __slots__ = ['sortKey'] # save some memory by using slots
     def __init__(self, sortKey):

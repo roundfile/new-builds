@@ -1,6 +1,11 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
+################################################
+#                                              #
+#          Dave's Special Version              #
+#                                              #
+################################################
 # stock.py
 #
 # Copyright (c) 2018, Paul Holleis, Marko Luther
@@ -247,8 +252,8 @@ def renderAmount(amount,default_unit = None,target_unit_idx = 0):
 # Stores
 #   store:  <storeLabel,locationID>
 
-#def makeStoreDict(location_hr_id,location_label):
-#    return {'location_hr_id': location_hr_id, 'location_label': location_label}
+def makeStoreDict(location_hr_id,location_label):
+    return {'location_hr_id': location_hr_id, 'location_label': location_label}
 
 def getStoreLabel(store):
     return store[0]
@@ -324,6 +329,19 @@ def coffee2beans(coffee):
             label = " " + label
     else:
         label = ""
+    #dave start
+    # reference contains the coffee number from dave's inventory spreadsheet
+    if "reference" in c:
+        reference = c["reference"]
+        if reference:
+            inventory_str = inventoryLookup(reference)
+#            print('* ', inventory_str)
+            if inventory_str:
+                label += ' /' + inventory_str
+                return '{}{}'.format(origin,label)
+            else:
+                label += ' |' + reference + '|' 
+    #dave end 
     processing = ""
     try:
         processing_str = c["processing"].strip()
@@ -364,7 +382,7 @@ def coffee2beans(coffee):
         elif landed is not None and not bool(picked):
             year = ', {:d}'.format(landed)
         elif picked is not None and landed is not None:
-            if picked == landed or not landed > picked:
+            if picked == landed:
                 year = ', {:d}'.format(picked)
             else:
                 year = ', {:d}/{:d}'.format(picked,landed)
@@ -397,33 +415,29 @@ def getCoffees(weight_unit_idx,store=None):
                         except:
                             pass
                         origin += ", "
-                    if "label" in c:
-                        label = c["label"]
-                    else:
-                        label = ""
+                    label = c["label"]
                     if "default_unit" in c:
                         default_unit = c["default_unit"]
                     else:
                         default_unit = None
-                    if "stock" in c:
-                        for s in c["stock"]:
-                            if store is None or ("location_hr_id" in s and s["location_hr_id"] == store):
-                                if "location_label" in s:
-                                    location = s["location_label"]
-                                    if "amount" in s:
-                                        amount = s["amount"]
-                                        if amount > stock_epsilon: # TODO: check here the machines capacity limits
-                                            # add location only if this coffee is available in several locations
-                                            if store:
-                                                loc = ""
-                                            else:
-                                                loc = location + ", "
-                                            res[origin + label + " (" + loc + renderAmount(amount,default_unit,weight_unit_idx) + ")"] = [c,s]
-                                    else:
+                    for s in c["stock"]:
+                        if store is None or ("location_hr_id" in s and s["location_hr_id"] == store):
+                            if "location_label" in s:
+                                location = s["location_label"]
+                                if "amount" in s:
+                                    amount = s["amount"]
+                                    if amount > stock_epsilon: # TODO: check here the machines capacity limits
+                                        # add location only if this coffee is available in several locations
                                         if store:
-                                            res[origin + label] = [c,s]
+                                            loc = ""
                                         else:
-                                            res[origin + label + " (" + location + ")"] = [c,s]
+                                            loc = location + ", "
+                                        res[origin + label + " (" + loc + renderAmount(amount,default_unit,weight_unit_idx) + ")"] = [c,s]
+                                else:
+                                    if store:
+                                        res[origin + label] = [c,s]
+                                    else:
+                                        res[origin + label + " (" + location + ")"] = [c,s]
                 except:
                     pass
             return sorted(res.items(), key=lambda x: x[0])
@@ -513,15 +527,15 @@ def getBlendBlendDict(blend,weight=None):
                     if c in components:
                         c_amount = components[c]
                     components[c] = i["ratio"] * remaining_amount + c_amount
-                    if "label" in i and i["label"] is not None:
+                    if "label" in i:
                         components_labels[c] = i["label"]
-                    if "moisture" in i and i["moisture"] is not None:
+                    if "moisture" in i:
                         components_moisture[c] = i["moisture"]
-                    if "density" in i and i["density"] is not None:
+                    if "density" in i:
                         components_density[c] = i["density"]
-                    if "screen_min" in i and i["screen_min"] is not None:
+                    if "screen_min" in i:
                         components_screen_min[c] = i["screen_min"]
-                    if "screen_max" in i and i["screen_max"] is not None:
+                    if "screen_max" in i:
                         components_screen_max[c] = i["screen_max"]
                 if weight-amount_spent <= max_amount:
                     amount_spent = amount_spent + remaining_amount
@@ -538,15 +552,15 @@ def getBlendBlendDict(blend,weight=None):
                         c_amount = components[c]
                     components[c] = i["ratio"] * missing_amount + c_amount
                     components_labels[c] = i["label"]
-                    if "label" in i and i["label"] is not None:
+                    if "label" in i:
                         components_labels[c] = i["label"]
-                    if "moisture" in i and i["moisture"] is not None:
+                    if "moisture" in i:
                         components_moisture[c] = i["moisture"]
-                    if "density" in i and i["density"] is not None:
+                    if "density" in i:
                         components_density[c] = i["density"]
-                    if "screen_min" in i and i["screen_min"] is not None:
+                    if "screen_min" in i:
                         components_screen_min[c] = i["screen_min"]
-                    if "screen_max" in i and i["screen_max"] is not None:
+                    if "screen_max" in i:
                         components_screen_max[c] = i["screen_max"]
             
             # we replace the ingredients with a recomputed set based on the usage per blend replaccement as accumulated in components and the weight
@@ -681,9 +695,9 @@ def getBlends(weight_unit_idx,store=None):
             for s in stores:
                 location_label = ""
                 store_blends = []
-                if "blends" in stock and stock["blends"] is not None:
+                if "blends" in stock:
                     store_blends.extend(stock["blends"])
-                if "replBlends" in stock and stock["replBlends"] is not None:
+                if "replBlends" in stock:
                     store_blends.extend(stock["replBlends"])
                 for blend in store_blends:
                     res_sd = None
@@ -939,13 +953,8 @@ def matchBlendDict(blendSpec, blendDict, sameLabel=True):
     if blendSpec is None or blendDict is None:
         return False
     else:
-        if (not sameLabel or blendSpec["label"] == blendDict["label"]):
-            if "hr_id" in blendSpec and "hr_id" in blendDict and blendSpec["hr_id"] == blendDict["hr_id"]:
-                return True
-            elif len(blendSpec["ingredients"]) == len(blendDict["ingredients"]) and len(blendSpec["ingredients"]) > 0:
-                return all([i1["coffee"]==i2["coffee"] and i1["ratio"]==i2["ratio"] for (i1,i2) in (zip(blendSpec["ingredients"],blendDict["ingredients"]))])
-            else:
-                return False
+        if (not sameLabel or blendSpec["label"] == blendDict["label"]) and len(blendSpec["ingredients"]) == len(blendDict["ingredients"]) and len(blendSpec["ingredients"]) > 0:
+            return all([i1["coffee"]==i2["coffee"] and i1["ratio"]==i2["ratio"] for (i1,i2) in (zip(blendSpec["ingredients"],blendDict["ingredients"]))])
         else:
             return False
 
@@ -966,3 +975,51 @@ def getBlendSpecStockPosition(blendSpec,stockId,blends):
         else:
             return None 
         
+#dave start
+def inventoryLookup(coffeenumber_str):
+    res = ''
+    coffeenumber = int(coffeenumber_str)
+    found = False
+    vendor = arrived = costper = ''
+    inventory_path = 'c:/Users/dbaxter/Dropbox/Artisan Roast Profiles/CoffeeInventory.xlsx'    
+    try:
+        from openpyxl import load_workbook
+        import re
+        inventory_wb = load_workbook(filename=inventory_path, read_only=False)
+        #inventory = inventory_wb['Sheet1']
+        inventory = inventory_wb.active
+
+        for col in range(1, inventory.max_column +1):
+            if inventory.cell(row=1, column=col).value == 'CoffeeNumber':
+                coffeenumber_col = col
+            if inventory.cell(row=1, column=col).value == 'CostPer':
+                costper_col = col
+            if inventory.cell(row=1, column=col).value == 'Vendor':
+                vendor_col = col
+            if inventory.cell(row=1, column=col).value == 'Arrived':
+                arrived_col = col
+        for row in range(inventory.max_row +1, 2, -1):
+#            print(row, coffeenumber_col, inventory.cell(row=row, column=coffeenumber_col).value)
+#            print(type(inventory.cell(row=row, column=coffeenumber_col).value), type(coffeenumber))
+            if inventory.cell(row=row, column=coffeenumber_col).value == coffeenumber:
+                found = True
+                costper = '{:.2f}'.format(inventory.cell(row=row, column=costper_col).value)
+                vendor = inventory.cell(row=row, column=vendor_col).value.strip()
+                arrived = str(inventory.cell(row=row, column=arrived_col).value)[0:10]
+        if not found:
+            return ''
+        ymd = re.split('-|/',arrived)
+#        print(ymd)
+        if len(ymd) == 3:
+            arrived = '{1}/{2}/{0}'.format(ymd[0], ymd[1], ymd[2])
+        else:
+            arrived = ''
+#        print('~', coffeenumber_col, costper_col, vendor_col, arrived_col)
+#        print('!', coffeenumber, costper, vendor, arrived)
+        res = '{}, {}, {}, {}'.format(coffeenumber, vendor, arrived, costper)
+        return res
+    except Exception as e:
+        config.logger.error("stock: Exception in inventoryLookup() %s",e)
+#        print('Exception!')
+        return None
+#dave end
