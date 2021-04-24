@@ -59,7 +59,8 @@ fi
 
 # translations
 echo "************* 1 **************"
-ls $PYTHONBIN
+locate pylupdate5
+locate artisan.pro
 $PYTHONBIN/pylupdate5 artisan.pro
 #/Users/appveyor/venv3.8.6/bin/pylupdate5 artisan.pro
 
