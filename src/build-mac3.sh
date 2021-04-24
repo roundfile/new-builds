@@ -1,5 +1,5 @@
 #!/bin/sh
- 
+
 #set -ex
 set -e  # reduced logging
 
@@ -8,10 +8,10 @@ set -e  # reduced logging
 if [ ! -z $APPVEYOR ]; then
     # Appveyor CI builds
     echo "NOTICE: Appveyor build"
-    export PYTHON=/Users/appveyor/venv3.9.1
+    export PYTHON=/Users/appveyor/venv3.8.6
     export PYTHONBIN=$PYTHON/bin
-    export PYTHONPATH=$PYTHON/lib/python3.9
-    export PYTHON_V=3.9
+    export PYTHONPATH=$PYTHON/lib/python3.8
+    export PYTHON_V=3.8
     
     export QT_PATH=${PYTHONPATH}/site-packages/PyQt5/Qt5 # from PyQt v5.15.4 this dir changed form PyQt5/Qt to PyQt5/Qt5
     export QT_SRC_PATH=${QT_PATH}
@@ -59,8 +59,6 @@ fi
 
 # translations
 echo "************* 1 **************"
-echo Running find /Users/appveyor/* -name pylupdate\*
-find /Users/appveyor/* -name pylupdate\*
 $PYTHONBIN/pylupdate5 artisan.pro
 #/Users/appveyor/venv3.8.6/bin/pylupdate5 artisan.pro
 
