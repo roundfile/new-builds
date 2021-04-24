@@ -8,7 +8,7 @@ set -e  # reduced logging
 if [ ! -z $APPVEYOR ]; then
     # Appveyor CI builds
     echo "NOTICE: Appveyor build"
-    export PYTHON=/Users/appveyor/venv3.9
+    export PYTHON=/Users/appveyor/venv3.9.1
     export PYTHONBIN=$PYTHON/bin
     export PYTHONPATH=$PYTHON/lib/python3.9
     export PYTHON_V=3.9
@@ -59,6 +59,7 @@ fi
 
 # translations
 echo "************* 1 **************"
+ls $PYTHONBIN
 $PYTHONBIN/pylupdate5 artisan.pro
 #/Users/appveyor/venv3.8.6/bin/pylupdate5 artisan.pro
 
