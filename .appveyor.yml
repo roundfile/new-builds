@@ -9,12 +9,12 @@ clone_depth: 1
 
 environment:
   matrix:
-#  - job_name: windows
-#    appveyor_build_worker_image: Visual Studio 2019
+  - job_name: windows
+    appveyor_build_worker_image: Visual Studio 2019
 #  - job_name: macos
 #    appveyor_build_worker_image: macos
-  - job_name: linux
-    appveyor_build_worker_image: Ubuntu1604
+#  - job_name: linux
+#    appveyor_build_worker_image: Ubuntu1604
 #  - job_name: rpi
 #    appveyor_build_worker_image: Ubuntu1604
 
@@ -49,6 +49,8 @@ for:
   install:
     - echo "Windows Install"
     - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
+    - echo "Python Version"
+    - python -V
     - "%PYTHON%\\python.exe -m pip install --upgrade pip"
     - "%PYTHON%\\python.exe -m pip install wheel"
     - "%PYTHON%\\python.exe -m pip install .ci\\pyinstaller-4.3-py3-none-any.whl"
@@ -92,8 +94,8 @@ for:
     - cmd: copy ..\LICENSE LICENSE.txt
     - cmd: 7z a artisan-win-%ARTISAN_VERSION%.zip Setup*.exe LICENSE.txt README.txt
 
-#  artifacts:
-#    - path: 'src\artisan-*.zip'
+  artifacts:
+    - path: 'src\artisan-*.zip'
 
   deploy_script:
     - cmd: curl -L -O https://github.com/roasterdave/uploadtool/raw/master/upload.sh
