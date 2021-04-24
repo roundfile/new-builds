@@ -11,10 +11,10 @@ environment:
   matrix:
   - job_name: windows
     appveyor_build_worker_image: Visual Studio 2019
-#  - job_name: macos
-#    appveyor_build_worker_image: macos
-#  - job_name: linux
-#    appveyor_build_worker_image: Ubuntu1604
+  - job_name: macos
+    appveyor_build_worker_image: macos
+  - job_name: linux
+    appveyor_build_worker_image: Ubuntu1604
 #  - job_name: rpi
 #    appveyor_build_worker_image: Ubuntu1604
 
@@ -94,8 +94,8 @@ for:
     - cmd: copy ..\LICENSE LICENSE.txt
     - cmd: 7z a artisan-win-%ARTISAN_VERSION%.zip Setup*.exe LICENSE.txt README.txt
 
-  artifacts:
-    - path: 'src\artisan-*.zip'
+#  artifacts:
+#    - path: 'src\artisan-*.zip'
 
   deploy_script:
     - cmd: curl -L -O https://github.com/roasterdave/uploadtool/raw/master/upload.sh
