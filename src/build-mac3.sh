@@ -10,7 +10,7 @@ if [ ! -z $APPVEYOR ]; then
     echo "NOTICE: Appveyor build"
     export PYTHON=/Users/appveyor/venv3.9.1
     export PYTHONBIN=$PYTHON/bin
-    export PYTHONPATH=$PYTHON/lib/python3.
+    export PYTHONPATH=$PYTHON/lib/python3.9
     export PYTHON_V=3.9
     
     export QT_PATH=${PYTHONPATH}/site-packages/PyQt5/Qt5 # from PyQt v5.15.4 this dir changed form PyQt5/Qt to PyQt5/Qt5
