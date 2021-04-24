@@ -59,8 +59,8 @@ fi
 
 # translations
 echo "************* 1 **************"
-find /Users/appveyor/* -name pylupdate5
-find /Users/appveyor/* -name activate.fish
+echo Running find /Users/appveyor/* -name pylupdate\*
+find /Users/appveyor/* -name pylupdate\*
 $PYTHONBIN/pylupdate5 artisan.pro
 #/Users/appveyor/venv3.8.6/bin/pylupdate5 artisan.pro
 
