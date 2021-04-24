@@ -59,7 +59,7 @@ fi
 
 # translations
 echo "************* 1 **************"
-find /Users/appveyor/* pylupdate5
+find /Users/appveyor/* -name pylupdate5
 $PYTHONBIN/pylupdate5 artisan.pro
 #/Users/appveyor/venv3.8.6/bin/pylupdate5 artisan.pro
 
