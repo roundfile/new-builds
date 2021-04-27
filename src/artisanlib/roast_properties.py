@@ -33,16 +33,21 @@ from artisanlib.widgets import MyQComboBox, ClickableQLabel, ClickableTextEdit, 
 
 from help import energy_help
 
-from uic import EnergyWidget 
+from uic import EnergyWidget
 from uic import SetupWidget
-
+from uic import MeasureDialog
+    
 from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot, QRegularExpression, QSettings, QTimer, QEvent
 from PyQt5.QtGui import QColor, QIntValidator, QRegularExpressionValidator, QKeySequence, QPalette
 from PyQt5.QtWidgets import (QApplication, QWidget, QCheckBox, QComboBox, QDialogButtonBox, QGridLayout,
                              QHBoxLayout, QVBoxLayout, QHeaderView, QLabel, QLineEdit, QTextEdit, QListView, 
                              QPushButton, QSpinBox, QTableWidget, QTableWidgetItem, QTabWidget, QSizePolicy,
                              QGroupBox)
-                             
+try: # hidden import to allow pyinstaller build on OS X to include the PyQt5.x private sip module
+    from PyQt5 import sip # @UnusedImport
+except:
+    pass
+
 if sys.platform.startswith("darwin"):
     import darkdetect # @UnresolvedImport
 
@@ -2643,8 +2648,7 @@ class editGraphDlg(ArtisanResizeablDialog):
         elif i == 5: # Setup (only initialized on creation)
             self.saveEventTable()
             self.initSetupTab()
-    
-    
+
     ###### ENERGY TAB #####
     
     
@@ -2675,8 +2679,6 @@ class editGraphDlg(ArtisanResizeablDialog):
             self.org_coolingenergies = self.aw.qmc.coolingenergies.copy()
             self.org_betweenbatch_after_preheat = self.aw.qmc.betweenbatch_after_preheat
             self.org_electricEnergyMix = self.aw.qmc.electricEnergyMix
-                    
-            self.energy_ui.helpButton.clicked.connect(self.showenergyhelp)
             
             ### reset UI text lables and tooltips for propper translation
             self.energy_ui.helpButton.setText(QApplication.translate("Button","Help",None))
@@ -2756,7 +2758,9 @@ class editGraphDlg(ArtisanResizeablDialog):
             # initialize
             self.updateEnergyTab()
         
-            # connect signals
+            # connect signals                    
+            self.energy_ui.helpButton.clicked.connect(self.showenergyhelp)
+            
             self.energy_ui.tabWidget.currentChanged.connect(self.energyTabSwitched)
             
             self.energy_ui.copyTableButton.clicked.connect(self.copyEnergyDataTabletoClipboard)
@@ -2800,6 +2804,10 @@ class editGraphDlg(ArtisanResizeablDialog):
             self.energy_ui.hundredpct1.valueChanged.connect(self.loadevent_hundpcts1_valuechanged)
             self.energy_ui.hundredpct2.valueChanged.connect(self.loadevent_hundpcts2_valuechanged)
             self.energy_ui.hundredpct3.valueChanged.connect(self.loadevent_hundpcts3_valuechanged)
+            
+            self.energy_ui.PreHeatToolButton.clicked.connect(self.preHeatToolButton_triggered)
+            self.energy_ui.BetweenBatchesToolButton.clicked.connect(self.betweenBatchesToolButton_triggered)
+            self.energy_ui.CoolingToolButton.clicked.connect(self.coolingToolButton_triggered)
 
             # Protocol
             
@@ -2982,10 +2990,10 @@ class editGraphDlg(ArtisanResizeablDialog):
         self.updateEnergyLabels()
     
     def updateLoadRatings(self, updateMetrics=True):
-        self.aw.qmc.loadratings[0] = (self.aw.float2float(self.energy_ui.loadrating0.text()) if len(self.energy_ui.loadrating0.text())>0 else 0)
-        self.aw.qmc.loadratings[1] = (self.aw.float2float(self.energy_ui.loadrating1.text()) if len(self.energy_ui.loadrating1.text())>0 else 0)
-        self.aw.qmc.loadratings[2] = (self.aw.float2float(self.energy_ui.loadrating2.text()) if len(self.energy_ui.loadrating2.text())>0 else 0)
-        self.aw.qmc.loadratings[3] = (self.aw.float2float(self.energy_ui.loadrating3.text()) if len(self.energy_ui.loadrating3.text())>0 else 0)
+        self.aw.qmc.loadratings[0] = toFloat(self.scalefloat(self.energy_ui.loadrating0.text())) if len(self.energy_ui.loadrating0.text())>0 else 0
+        self.aw.qmc.loadratings[1] = toFloat(self.scalefloat(self.energy_ui.loadrating1.text())) if len(self.energy_ui.loadrating1.text())>0 else 0
+        self.aw.qmc.loadratings[2] = toFloat(self.scalefloat(self.energy_ui.loadrating2.text())) if len(self.energy_ui.loadrating2.text())>0 else 0
+        self.aw.qmc.loadratings[3] = toFloat(self.scalefloat(self.energy_ui.loadrating3.text())) if len(self.energy_ui.loadrating3.text())>0 else 0
         if updateMetrics:
             self.updateMetricsLabel()
     
@@ -3349,7 +3357,7 @@ class editGraphDlg(ArtisanResizeablDialog):
     
     def loadevent_pcts_valuechanged(self,field,zeropcts,hundpcts):
         if zeropcts.value() >= hundpcts.value():
-            self.aw.sendmessage(QApplication.translate("Dialog","The 0% value must be less than the 100% value.",None))
+            self.aw.sendmessage(QApplication.translate("Message","The 0% value must be less than the 100% value.",None))
             QApplication.beep()
             if field == "zero":
                 zeropcts.setValue(hundpcts.value()-1)
@@ -3429,7 +3437,7 @@ class editGraphDlg(ArtisanResizeablDialog):
     ######
 
     def scalefloat(self,num):
-        n = toFloat(num)
+        n = toFloat(self.aw.comma2dot(str(num)))
         if n == 0:
             res = "0"
         elif n < 1:
@@ -3459,8 +3467,9 @@ class editGraphDlg(ArtisanResizeablDialog):
     def validateNumText(self,s):
         res = ""
         try:
-            r = abs(self.aw.float2float(toFloat((self.aw.comma2dot(str(s))))))
-            if not r == 0:
+            r = self.scalefloat(toFloat(self.aw.comma2dot(str(s))))
+            #print("r, type(r)",r, type(r))  #dave
+            if not r == '0':
                 res = str(r)
         except Exception:
             pass
@@ -3490,7 +3499,7 @@ class editGraphDlg(ArtisanResizeablDialog):
             if len(s) == 0:
                 res = 0
             elif s == s.strip('%'):
-                res = self.aw.float2float(toFloat(s))
+                res = toFloat(self.scalefloat(s))
             else:
                 res = self.aw.float2float(toFloat(s.strip('%'))/100,2)
         except:
@@ -4720,3 +4729,101 @@ class editGraphDlg(ArtisanResizeablDialog):
         if not self.aw.qmc.flagon:
             self.aw.sendmessage(QApplication.translate("Message","Roast properties updated but profile not saved to disk", None))
         self.close()
+    
+    def getMeasuredvalues(self,title,updatefields,fields,loadEnergy):
+        loadLabels = ['']*4
+        loadUnits = ['']*4
+        loadValues = ['0']*4
+        for i in range(0,4): 
+            loadLabels[i] = self.formatLoadLabel(chr(ord('A')+i),self.aw.qmc.loadlabels[i])
+            if self.aw.qmc.load_etypes[i] > 0:
+                loadValues[i] = self.scalefloat(loadEnergy[i])
+                loadUnits[i] = self.aw.qmc.energyunits[self.aw.qmc.ratingunits[i]]
+            else:
+                loadValues[i] = '--'
+                loadUnits[i] = ''
+        if self.openEnergyMeasuringDialog(title,loadLabels,loadValues,loadUnits):
+            # set values
+            for i, field in enumerate(fields): 
+                if self.aw.qmc.load_etypes[i] > 0 and loadEnergy[i] > -1:
+                    field.setText(self.validatePctText(str(loadEnergy[i])))
+                    updatefields()
+        
+    @pyqtSlot(bool)
+    def preHeatToolButton_triggered(self,_):
+        title = QApplication.translate("Label","Pre-Heating",None)
+        loadEnergy,_ = self.aw.qmc.measureFromprofile()
+        fields = [self.energy_ui.preheatenergies0,
+                self.energy_ui.preheatenergies1,
+                self.energy_ui.preheatenergies2,
+                self.energy_ui.preheatenergies3]
+        self.getMeasuredvalues(title, self.updatePreheatEnergies, fields, loadEnergy)
+
+    @pyqtSlot(bool)
+    def betweenBatchesToolButton_triggered(self,_):
+        title = QApplication.translate("Label","Between Batches",None)
+        loadEnergy,_ = self.aw.qmc.measureFromprofile()
+        fields = [self.energy_ui.betweenbatchesenergy0,
+                self.energy_ui.betweenbatchesenergy1,
+                self.energy_ui.betweenbatchesenergy2,
+                self.energy_ui.betweenbatchesenergy3]
+        self.getMeasuredvalues(title, self.updateBetweenBatchesEnergies, fields, loadEnergy)
+
+    @pyqtSlot(bool)
+    def coolingToolButton_triggered(self,_):
+        title = QApplication.translate("Label","Cooling",None)
+        _,loadEnergy = self.aw.qmc.measureFromprofile()
+        fields = [self.energy_ui.coolingenergies0,
+                self.energy_ui.coolingenergies1,
+                self.energy_ui.coolingenergies2,
+                self.energy_ui.coolingenergies3]
+        self.getMeasuredvalues(title, self.updateCoolingEnergies, fields, loadEnergy)
+
+    def openEnergyMeasuringDialog(self,title,loadLabels,loadValues,loadUnits):
+        dialog = EnergyMeasuringDialog(self)
+        layout  = dialog.layout()
+        # set data
+        dialog.ui.groupBox.setTitle(title)
+        dialog.ui.loadAlabel.setText(loadLabels[0])
+        dialog.ui.loadBlabel.setText(loadLabels[1])
+        dialog.ui.loadClabel.setText(loadLabels[2])
+        dialog.ui.loadDlabel.setText(loadLabels[3])
+        dialog.ui.loadA.setText(loadValues[0])
+        dialog.ui.loadB.setText(loadValues[1])
+        dialog.ui.loadC.setText(loadValues[2])
+        dialog.ui.loadD.setText(loadValues[3])
+        dialog.ui.loadAunit.setText(loadUnits[0])
+        dialog.ui.loadBunit.setText(loadUnits[1])
+        dialog.ui.loadCunit.setText(loadUnits[2])
+        dialog.ui.loadDunit.setText(loadUnits[3])
+        # fixed hight
+        layout.setSpacing(5)
+        dialog.setFixedHeight(dialog.sizeHint().height())
+        res = dialog.exec_()
+        #deleteLater() will not work here as the dialog is still bound via the parent
+        #dialog.deleteLater() # now we explicitly allow the dialog an its widgets to be GCed
+        # the following will immedately release the memory dispite this parent link
+        QApplication.processEvents() # we ensure events concerning this dialog are processed before deletion
+        try: # sip not supported on older PyQt versions (RPi!)
+            sip.delete(dialog)
+            #print(sip.isdeleted(dialog))
+        except:
+            pass
+        return res
+        
+    
+########################################################################################
+#####################  ENERGY Measuring Dialog  ########################################
+
+class EnergyMeasuringDialog(ArtisanDialog):
+    def __init__(self, parent = None):
+        super(EnergyMeasuringDialog,self).__init__(parent)
+        self.ui = MeasureDialog.Ui_setMeasureDialog()
+        self.ui.setupUi(self)
+        self.setWindowTitle(QApplication.translate("Form Caption","Set Measure from Profile",None))
+        self.ui.buttonBox.setStandardButtons(QDialogButtonBox.Cancel|QDialogButtonBox.Apply)
+        # hack to assign the Apply button the AcceptRole without loosing default system translations
+        applyButton = self.ui.buttonBox.button(QDialogButtonBox.Apply)
+        self.ui.buttonBox.removeButton(applyButton)
+        self.ui.buttonBox.addButton(applyButton.text(), QDialogButtonBox.AcceptRole)
+
