@@ -5819,8 +5819,11 @@ class tgraphcanvas(FigureCanvas):
         else:
             xytext = (x+e,y + yup)
         temp_anno = self.ax.annotate(fmtstr%(temp), xy=(x,y),xytext=xytext,
-                            color=self.palette["text"],arrowprops=dict(arrowstyle='-',color=self.palette["text"],alpha=a),
-                            fontsize=fontsize,alpha=a,fontproperties=fontprop_small)
+                            color=self.palette["text"],
+                            arrowprops=dict(arrowstyle='-',color=self.palette["text"],alpha=a),
+                            fontsize=fontsize,
+                            alpha=a,
+                            fontproperties=fontprop_small)
         try:
             temp_anno.set_in_layout(False)  # remove text annotations from tight_layout calculation
             temp_anno.draggable(use_blit=True)
@@ -6372,7 +6375,11 @@ class tgraphcanvas(FigureCanvas):
         fontprop_medium = aw.mpl_fontproperties.copy()
         fontprop_medium.set_size("medium")
         self.xlabel_text = xlabel
-        self.xlabel_artist = self.ax.set_xlabel(xlabel,color = self.palette["xlabel"],fontproperties=fontprop_medium)
+        self.xlabel_artist = self.ax.set_xlabel(xlabel,color = self.palette["xlabel"],
+#            fontproperties=fontprop_medium
+            fontsize="medium",
+            fontfamily=fontprop_medium.get_family()
+            )
         try:
             self.xlabel_width = self.xlabel_artist.get_window_extent(renderer=self.fig.canvas.get_renderer()).width
         except:
@@ -6392,15 +6399,19 @@ class tgraphcanvas(FigureCanvas):
             pass
 
         self.background_title_width = 0
-        fontprop_small = aw.mpl_fontproperties.copy()
-        fontprop_small.set_size("xx-small")
+#        fontprop_small = aw.mpl_fontproperties.copy()
+#        fontprop_small.set_size("xx-small")
         backgroundtitle = backgroundtitle.strip()
         if backgroundtitle != "":
             if aw.qmc.graphfont == 1: # if selected font is Humor we translate the unicode title into pure ascii
                 backgroundtitle = toASCII(backgroundtitle)
             backgroundtitle = "\n" + aw.qmc.abbrevString(backgroundtitle,30)
         st_artist = self.fig.suptitle(backgroundtitle,
-                horizontalalignment="right",verticalalignment="top",fontproperties=fontprop_small,x=suptitleX,y=1,color=self.palette["title"])
+                horizontalalignment="right",verticalalignment="top",
+#                fontproperties=fontprop_small,  # title not rendered in PDF in MPL3.4.x
+                fontsize="xx-small",
+                x=suptitleX,y=1,
+                color=self.palette["title"])
         try:
             st_artist.set_in_layout(False)  # remove title from tight_layout calculation
         except:  # set_in_layout not available in mpl<3.x
@@ -6425,15 +6436,17 @@ class tgraphcanvas(FigureCanvas):
         if bnr != 0 and title != "":
             title = "{}{} {}".format(bprefix,str(bnr),title)
             
-        if aw.qmc.graphfont == 1: # if selected font is Humor we translate the unicode title into pure ascii
+        if self.graphfont == 1: # if selected font is Humor we translate the unicode title into pure ascii
             title = toASCII(title)
         
-        fontprop_xlarge = aw.mpl_fontproperties.copy()
-        fontprop_xlarge.set_size("xx-large")
+#        fontprop_xlarge = aw.mpl_fontproperties.copy()
+#        fontprop_xlarge.set_size("xx-large")
         
         self.title_text = aw.arabicReshape(title.strip())
         self.title_artist = self.ax.set_title(self.title_text, color=self.palette["title"], loc='left',
-                    fontproperties=fontprop_xlarge,horizontalalignment="left",verticalalignment="top",x=0)
+#                    fontproperties=fontprop_xlarge, # title not rendered in PDF in MPL3.4.x
+                    fontsize="xx-large",
+                    horizontalalignment="left",verticalalignment="top",x=0)
         try: # this one seems not to work for titles, subtitles and axis!?
             self.title_artist.set_in_layout(False) # remove title from tight_layout calculation
         except: # set_in_layout not available in mpl<3.x
@@ -6556,12 +6569,14 @@ class tgraphcanvas(FigureCanvas):
                 self.ax.set_ylim(self.ylimit_min, self.ylimit)
                 self.ax.set_autoscale_on(False)
 
+                prop = aw.mpl_fontproperties.copy()
+                prop.set_size("small")
                 fontprop_small = aw.mpl_fontproperties.copy()
                 fontprop_small.set_size("xx-small")
-                fontprop_medium = aw.mpl_fontproperties.copy()
-                fontprop_medium.set_size("medium")
-                fontprop_large = aw.mpl_fontproperties.copy()
-                fontprop_large.set_size("large")
+#                fontprop_medium = aw.mpl_fontproperties.copy()
+#                fontprop_medium.set_size("medium")
+#                fontprop_large = aw.mpl_fontproperties.copy()
+#                fontprop_large.set_size("large")
 
                 grid_axis = None
                 if self.temp_grid and self.time_grid:
@@ -6571,7 +6586,7 @@ class tgraphcanvas(FigureCanvas):
                 elif self.time_grid:
                     grid_axis = 'x'
                 if grid_axis is not None:
-                    self.ax.grid(True,axis=grid_axis,color=self.palette["grid"],linestyle=self.gridstyles[self.gridlinestyle],linewidth = self.gridthickness,alpha = self.gridalpha,sketch_params=0,path_effects=[])
+                    self.ax.grid(True,axis=grid_axis,color=self.palette["grid"],linestyle=self.gridstyles[self.gridlinestyle],linewidth=self.gridthickness,alpha=self.gridalpha,sketch_params=0,path_effects=[])
 
                 if aw.qmc.flagstart and not aw.qmc.title_show_always:
                     self.setProfileTitle("")
@@ -6595,7 +6610,11 @@ class tgraphcanvas(FigureCanvas):
                     y_label = self.ax.set_ylabel("")
                     self.set_xlabel("")
                 else:
-                    y_label = self.ax.set_ylabel(self.mode,color=self.palette["ylabel"],rotation=0,labelpad=10,fontproperties=fontprop_large)
+                    y_label = self.ax.set_ylabel(self.mode,color=self.palette["ylabel"],rotation=0,labelpad=10,
+#                        fontproperties=fontprop_large, # fails to render in PDF on MPL 3.4.x
+                            fontsize="large",
+                        fontfamily=prop.get_family()
+                        )
                     self.set_xlabel(aw.arabicReshape(QApplication.translate("Label", "min","abbrev. of minutes")))
 
                 try:
@@ -6637,8 +6656,6 @@ class tgraphcanvas(FigureCanvas):
                     top=False,          # ticks along the top edge are off
                     direction=tick_dir,
                     labelbottom=True)   # labels along the bottom edge are on
-                prop = aw.mpl_fontproperties.copy()
-                prop.set_size("small")
 
                 # format temperature as int, not float in the cursor position coordinate indicator
                 self.ax.fmt_ydata = self.fmt_data
@@ -6662,7 +6679,11 @@ class tgraphcanvas(FigureCanvas):
                     if aw.qmc.flagstart:
                         y_label = self.delta_ax.set_ylabel("")
                     else:
-                        y_label = self.delta_ax.set_ylabel(aw.qmc.mode + aw.arabicReshape(QApplication.translate("Label", "/min", None)),color = self.palette["ylabel"],fontproperties=fontprop_large)
+                        y_label = self.delta_ax.set_ylabel(aw.qmc.mode + aw.arabicReshape(QApplication.translate("Label", "/min", None)),color = self.palette["ylabel"],
+#                            fontproperties=fontprop_large, # fails to render in PDF on MPL 3.4.x
+                            fontsize="large",
+                            fontfamily=prop.get_family()                            
+                            )
                     try:
                         y_label.set_in_layout(False) # remove y-axis labels from tight_layout calculation
                     except: # set_in_layout not available in mpl<3.x
@@ -6675,8 +6696,11 @@ class tgraphcanvas(FigureCanvas):
                             i.set_markersize(10)
                         for i in self.delta_ax.yaxis.get_minorticklines():
                             i.set_markersize(5)
+# labels not rendered in PDF exports on MPL 3.4 if fontproperties are set:
+#                        for label in self.delta_ax.get_yticklabels() :
+#                            label.set_fontproperties(prop)
                         for label in self.delta_ax.get_yticklabels() :
-                            label.set_fontproperties(prop)
+                            label.set_fontsize("small")
 
                     # translate y-coordinate from delta into temp range to ensure the cursor position display (x,y) coordinate in the temp axis
                     self.delta_ax.fmt_ydata = self.fmt_data
@@ -6740,9 +6764,13 @@ class tgraphcanvas(FigureCanvas):
                 self.xaxistosm(redraw=False)
 
                 for label in self.ax.get_xticklabels() :
-                    label.set_fontproperties(prop)
+# labels not rendered in PDF exports on MPL 3.4 if fontproperties are set:
+#                    label.set_fontproperties(prop)
+                    label.set_fontsize("small")
                 for label in self.ax.get_yticklabels() :
-                    label.set_fontproperties(prop)
+# labels not rendered in PDF exports on MPL 3.4 if fontproperties are set:
+#                    label.set_fontproperties(prop)
+                    label.set_fontsize("small")
 
                 rcParams['path.sketch'] = (0,0,0)
                 trans = transforms.blended_transform_factory(self.ax.transAxes,self.ax.transData)
@@ -7007,8 +7035,11 @@ class tgraphcanvas(FigureCanvas):
                                 anno = self.ax.annotate(st1, xy=(self.timeB[event_idx], temp),path_effects=[],
                                                     xytext=(self.timeB[event_idx], temp+height),
                                                     va="center", ha="center",
-                                                    fontsize="x-small",fontproperties=aw.mpl_fontproperties,color=self.palette["bgeventtext"],
-                                                    arrowprops=dict(arrowstyle='wedge',color=self.palette["bgeventmarker"],
+                                                    fontsize="x-small",
+#                                                    fontproperties=aw.mpl_fontproperties, # no PDF output with fontproperties on MPL3.4.x
+                                                    color=self.palette["bgeventtext"],
+                                                    arrowprops=dict(arrowstyle='wedge',
+                                                                    color=self.palette["bgeventmarker"],
                                                                     alpha=self.backgroundalpha),#relpos=(0,0)),
                                                     alpha=min(self.backgroundalpha + 0.1, 1.0))
                                 try:
@@ -7049,23 +7080,24 @@ class tgraphcanvas(FigureCanvas):
                                                         alpha=min(self.backgroundalpha + 0.1, 1.0),
                                                         color=self.palette["text"],
                                                         va="bottom", ha="left",
-                                                        fontproperties=eventannotationprop,
+                                                        fontsize="x-small",
+#                                                        fontproperties=eventannotationprop, # no PDF output with fontproperties on MPL3.4.x
                                                         path_effects=[PathEffects.withStroke(linewidth=self.patheffects,foreground=self.palette["background"])],
                                                         )
                                             try:
                                                 anno.set_in_layout(False)  # remove text annotations from tight_layout calculation
                                             except: # mpl before v3.0 do not have this set_in_layout() function
                                                 pass
-                                        try:
-                                            anno.set_in_layout(False)  # remove text annotations from tight_layout calculation
-                                        except: # mpl before v3.0 do not have this set_in_layout() function
-                                            pass
-                                        try:
-                                            overlap = self.checkOverlap(anno, i, E1b_annotation)
-                                            if overlap:
-                                                anno.remove()
-                                        except:
-                                            pass
+                                            try:
+                                                anno.set_in_layout(False)  # remove text annotations from tight_layout calculation
+                                            except: # mpl before v3.0 do not have this set_in_layout() function
+                                                pass
+                                            try:
+                                                overlap = self.checkOverlap(anno, i, E1b_annotation)
+                                                if overlap:
+                                                    anno.remove()
+                                            except:
+                                                pass
                                     except Exception as ex:
 #                                        import traceback
 #                                        traceback.print_exc(file=sys.stdout)
@@ -7093,16 +7125,16 @@ class tgraphcanvas(FigureCanvas):
                                                 anno.set_in_layout(False)  # remove text annotations from tight_layout calculation
                                             except: # mpl before v3.0 do not have this set_in_layout() function
                                                 pass
-                                        try:
-                                            anno.set_in_layout(False)  # remove text annotations from tight_layout calculation
-                                        except: # mpl before v3.0 do not have this set_in_layout() function
-                                            pass
-                                        try:
-                                            overlap = self.checkOverlap(anno, i, E2b_annotation)
-                                            if overlap:
-                                                anno.remove()
-                                        except:
-                                            pass
+                                            try:
+                                                anno.set_in_layout(False)  # remove text annotations from tight_layout calculation
+                                            except: # mpl before v3.0 do not have this set_in_layout() function
+                                                pass
+                                            try:
+                                                overlap = self.checkOverlap(anno, i, E2b_annotation)
+                                                if overlap:
+                                                    anno.remove()
+                                            except:
+                                                pass
                                     except Exception as ex:
 #                                        import traceback
 #                                        traceback.print_exc(file=sys.stdout)
@@ -7130,16 +7162,16 @@ class tgraphcanvas(FigureCanvas):
                                                 anno.set_in_layout(False)  # remove text annotations from tight_layout calculation
                                             except: # mpl before v3.0 do not have this set_in_layout() function
                                                 pass
-                                        try:
-                                            anno.set_in_layout(False)  # remove text annotations from tight_layout calculation
-                                        except: # mpl before v3.0 do not have this set_in_layout() function
-                                            pass
-                                        try:
-                                            overlap = self.checkOverlap(anno, i, E3b_annotation)
-                                            if overlap:
-                                                anno.remove()
-                                        except:
-                                            pass
+                                            try:
+                                                anno.set_in_layout(False)  # remove text annotations from tight_layout calculation
+                                            except: # mpl before v3.0 do not have this set_in_layout() function
+                                                pass
+                                            try:
+                                                overlap = self.checkOverlap(anno, i, E3b_annotation)
+                                                if overlap:
+                                                    anno.remove()
+                                            except:
+                                                pass
                                     except Exception as ex:
 #                                        import traceback
 #                                        traceback.print_exc(file=sys.stdout)
@@ -7167,16 +7199,16 @@ class tgraphcanvas(FigureCanvas):
                                                 anno.set_in_layout(False)  # remove text annotations from tight_layout calculation
                                             except: # mpl before v3.0 do not have this set_in_layout() function
                                                 pass
-                                        try:
-                                            anno.set_in_layout(False)  # remove text annotations from tight_layout calculation
-                                        except: # mpl before v3.0 do not have this set_in_layout() function
-                                            pass
-                                        try:
-                                            overlap = self.checkOverlap(anno, i, E4b_annotation)
-                                            if overlap:
-                                                anno.remove()
-                                        except:
-                                            pass
+                                            try:
+                                                anno.set_in_layout(False)  # remove text annotations from tight_layout calculation
+                                            except: # mpl before v3.0 do not have this set_in_layout() function
+                                                pass
+                                            try:
+                                                overlap = self.checkOverlap(anno, i, E4b_annotation)
+                                                if overlap:
+                                                    anno.remove()
+                                            except:
+                                                pass
                                     except Exception as ex:
 #                                        import traceback
 #                                        traceback.print_exc(file=sys.stdout)
@@ -8624,24 +8656,26 @@ class tgraphcanvas(FigureCanvas):
                     statstr += '\n' + QApplication.translate("AddlInfo", "AUC", None) + ': ' + str(cp["AUC"]) + 'C*min [' + str(cp["AUCbase"]) + aw.qmc.mode + "]"
 
                 if aw.qmc.roastingnotes is not None and len(aw.qmc.roastingnotes)>0:
-                    statstr += skipline
                     roasting_notes_lines = textwrap.wrap(aw.qmc.roastingnotes, width=aw.qmc.statsmaxchrperline)
-                    statstr += roasting_notes_lines[0]
-                    if len(roasting_notes_lines)>1:
+                    if len(roasting_notes_lines)>0:
                         statstr += skipline
-                        statstr += "  " + roasting_notes_lines[1]
-                        if len(roasting_notes_lines)>2:
-                            statstr += ".."
+                        statstr += roasting_notes_lines[0]
+                        if len(roasting_notes_lines)>1:
+                            statstr += skipline
+                            statstr += "  " + roasting_notes_lines[1]
+                            if len(roasting_notes_lines)>2:
+                                statstr += ".."
 
                 if aw.qmc.cuppingnotes is not None and len(aw.qmc.cuppingnotes)>0:
-                    statstr += skipline
                     cupping_notes_lines = textwrap.wrap(aw.qmc.cuppingnotes, width=aw.qmc.statsmaxchrperline)
-                    statstr += cupping_notes_lines[0]
-                    if len(cupping_notes_lines)>1:
+                    if len(cupping_notes_lines)>0:
                         statstr += skipline
-                        statstr += "  " + cupping_notes_lines[1]
-                        if len(cupping_notes_lines)>2:
-                            statstr += ".."
+                        statstr += cupping_notes_lines[0]
+                        if len(cupping_notes_lines)>1:
+                            statstr += skipline
+                            statstr += "  " + cupping_notes_lines[1]
+                            if len(cupping_notes_lines)>2:
+                                statstr += ".."
 
                 # Trim the long lines
                 trimmedstatstr = ""
@@ -8656,7 +8690,8 @@ class tgraphcanvas(FigureCanvas):
 
                 #defaults appropriate for default font
                 prop = aw.mpl_fontproperties.copy()
-                prop.set_size("small")
+                prop_size = "small"
+                prop.set_size(prop_size)
                 fc = aw.qmc.palette["statsanalysisbkgnd"]  #fill color
                 tc = aw.labelBorW(fc)                   #text color
                 a = aw.qmc.alpha["statsanalysisbkgnd"]     #alpha
@@ -8666,7 +8701,8 @@ class tgraphcanvas(FigureCanvas):
 
                 #adjust for other fonts
                 if aw.qmc.graphfont == 1:   #Humor
-                    prop.set_size("x-small")
+                    prop_size = "x-small"
+                    prop.set_size(prop_size)
                 if aw.qmc.graphfont == 2:   #Comic
                     ls = 1.2
 
@@ -8718,7 +8754,10 @@ class tgraphcanvas(FigureCanvas):
                 self.stats_summary_rect = patches.Rectangle((pos_x-margin,pos_y - (stats_textbox_height + 2*margin)),stats_textbox_width+2*margin,stats_textbox_height+3*margin,linewidth=0.5,edgecolor=aw.qmc.palette["grid"],facecolor=fc,fill=True,alpha=a,zorder=10)
                 self.ax.add_patch(self.stats_summary_rect)
 
-                text = self.ax.text(pos_x, pos_y, statstr, verticalalignment='top',linespacing=ls,fontproperties=prop,color=tc,zorder=11,path_effects=[])
+                text = self.ax.text(pos_x, pos_y, statstr, verticalalignment='top',linespacing=ls,
+                    fontsize=prop_size,
+#                    fontproperties=prop, # fails to render in PDF on MPL 3.4.x
+                    color=tc,zorder=11,path_effects=[])
                 text.set_in_layout(False)
         except Exception as e:
             _, _, exc_tb = sys.exc_info()
@@ -9432,11 +9471,9 @@ class tgraphcanvas(FigureCanvas):
     
     def deviceLogDEBUG(self):
         PhidgetLog.setLevel(PhidgetLogLevel.PHIDGET_LOG_VERBOSE)
-        print("debug")
     
     def deviceLLogINFO(self):
         PhidgetLog.setLevel(PhidgetLogLevel.PHIDGET_LOG_INFO)
-        print("info")
 
     def startPhidgetManager(self):
         # this is needed to surpress the message on the ignored Exception
@@ -11686,26 +11723,39 @@ class tgraphcanvas(FigureCanvas):
                     LP = self.temp2[TP_index]
 
                 if self.statisticsflags[0]:
-                    statsprop = aw.mpl_fontproperties.copy()
-                    statsprop.set_size(11)
-                    text = self.ax.text(self.timex[self.timeindex[0]]+ self.statisticstimes[1]/2.,statisticsupper,st1 + "  "+ dryphaseP+"%",color=self.palette["text"],ha="center",fontproperties=statsprop)
+# fails be rendered in PDF exports on MPL v3.4.x
+#                    statsprop = aw.mpl_fontproperties.copy()
+#                    statsprop.set_size(11)
+                    text = self.ax.text(self.timex[self.timeindex[0]]+ self.statisticstimes[1]/2.,statisticsupper,st1 + "  "+ dryphaseP+"%",color=self.palette["text"],ha="center",
+#                        fontproperties=statsprop
+                        fontsize="medium"
+                        )
                     try:
                         text.set_in_layout(False)
                     except:
                         pass
                     if self.timeindex[2]: # only if FCs exists
-                        text = self.ax.text(self.timex[self.timeindex[0]]+ self.statisticstimes[1]+self.statisticstimes[2]/2.,statisticsupper,st2+ "  " + midphaseP+"%",color=self.palette["text"],ha="center",fontproperties=statsprop)
+                        text = self.ax.text(self.timex[self.timeindex[0]]+ self.statisticstimes[1]+self.statisticstimes[2]/2.,statisticsupper,st2+ "  " + midphaseP+"%",color=self.palette["text"],ha="center",
+#                            fontproperties=statsprop
+                            fontsize="medium"
+                            )
                         try:
                             text.set_in_layout(False)
                         except:
                             pass
-                        text = self.ax.text(self.timex[self.timeindex[0]]+ self.statisticstimes[1]+self.statisticstimes[2]+self.statisticstimes[3]/2.,statisticsupper,st3 + "  " + finishphaseP+ "%",color=self.palette["text"],ha="center",fontproperties=statsprop)
+                        text = self.ax.text(self.timex[self.timeindex[0]]+ self.statisticstimes[1]+self.statisticstimes[2]+self.statisticstimes[3]/2.,statisticsupper,st3 + "  " + finishphaseP+ "%",color=self.palette["text"],ha="center",
+#                            fontproperties=statsprop
+                            fontsize="medium"
+                            )
                         try:
                             text.set_in_layout(False)
                         except:
                             pass
                     if self.timeindex[7]: # only if COOL exists
-                        text = self.ax.text(self.timex[self.timeindex[0]]+ self.statisticstimes[1]+self.statisticstimes[2]+self.statisticstimes[3]+self.statisticstimes[4]/2.,statisticsupper,st4,color=self.palette["text"],ha="center",fontproperties=statsprop)
+                        text = self.ax.text(self.timex[self.timeindex[0]]+ self.statisticstimes[1]+self.statisticstimes[2]+self.statisticstimes[3]+self.statisticstimes[4]/2.,statisticsupper,st4,color=self.palette["text"],ha="center",
+#                            fontproperties=statsprop
+                            fontsize="medium"
+                            )
                         try:
                             text.set_in_layout(False)
                         except:
@@ -11727,26 +11777,40 @@ class tgraphcanvas(FigureCanvas):
                     st2 = st2 + fmtstr.format(rates_of_changes[4], aw.qmc.mode, rates_of_changes[1], aw.arabicReshape(aw.qmc.mode + QApplication.translate("Label", "/min",None)))
                     st3 = st3 + fmtstr.format(rates_of_changes[5], aw.qmc.mode, rates_of_changes[2], aw.arabicReshape(aw.qmc.mode + QApplication.translate("Label", "/min",None)))
 
-                    statsprop = aw.mpl_fontproperties.copy()
-                    statsprop.set_size(11)
-                    text = self.ax.text(self.timex[self.timeindex[0]] + self.statisticstimes[1]/2.,statisticslower,st1,color=self.palette["text"],ha="center",fontproperties=statsprop)
+# fails be rendered in PDF exports on MPL v3.4.x
+#                    statsprop = aw.mpl_fontproperties.copy()
+#                    statsprop.set_size(11)
+                    
+                    text = self.ax.text(self.timex[self.timeindex[0]] + self.statisticstimes[1]/2.,statisticslower,st1,
+                        color=self.palette["text"],
+                        ha="center",
+                        fontsize="medium")
                     try:
                         text.set_in_layout(False)
                     except:
                         pass
                     if self.timeindex[2]: # only if FCs exists
-                        text = self.ax.text(self.timex[self.timeindex[0]] + self.statisticstimes[1]+self.statisticstimes[2]/2.,statisticslower,st2,color=self.palette["text"],ha="center",fontproperties=statsprop)
+                        text = self.ax.text(self.timex[self.timeindex[0]] + self.statisticstimes[1]+self.statisticstimes[2]/2.,statisticslower,st2,color=self.palette["text"],ha="center",
+                            #fontproperties=statsprop # fails be rendered in PDF exports on MPL v3.4.x
+                            fontsize="medium"
+                            )
                         try:
                             text.set_in_layout(False)
                         except:
                             pass
-                        text = self.ax.text(self.timex[self.timeindex[0]] + self.statisticstimes[1]+self.statisticstimes[2]+self.statisticstimes[3]/2.,statisticslower,st3,color=self.palette["text"],ha="center",fontproperties=statsprop)
+                        text = self.ax.text(self.timex[self.timeindex[0]] + self.statisticstimes[1]+self.statisticstimes[2]+self.statisticstimes[3]/2.,statisticslower,st3,color=self.palette["text"],ha="center",
+                            #fontproperties=statsprop # fails be rendered in PDF exports on MPL v3.4.x
+                            fontsize="medium"
+                            )
                         try:
                             text.set_in_layout(False)
                         except:
                             pass
                     if self.timeindex[7]: # only if COOL exists
-                        text = self.ax.text(self.timex[self.timeindex[0]]+ self.statisticstimes[1]+self.statisticstimes[2]+self.statisticstimes[3]+max(self.statisticstimes[4]/2.,self.statisticstimes[4]/3.),statisticslower,st4,color=self.palette["text"],ha="center",fontproperties=statsprop)
+                        text = self.ax.text(self.timex[self.timeindex[0]]+ self.statisticstimes[1]+self.statisticstimes[2]+self.statisticstimes[3]+max(self.statisticstimes[4]/2.,self.statisticstimes[4]/3.),statisticslower,st4,color=self.palette["text"],ha="center",
+                            #fontproperties=statsprop # fails be rendered in PDF exports on MPL v3.4.x
+                            fontsize="medium"
+                            )
                         try:
                             text.set_in_layout(False)
                         except:
@@ -11793,21 +11857,12 @@ class tgraphcanvas(FigureCanvas):
                         
             #reference: https://www.eia.gov/environment/emissions/co2_vol_mass.php
             #           https://carbonpositivelife.com/co2-per-kwh-of-electricity/
-            # entries must match those in self.sourcetypes
-            CO2kg_per_BTU = {0:6.307e-05, 1:5.307e-05, 2:0.94}
+            #           https://www.eia.gov/tools/faqs/faq.php?id=74&t=11
+            # entries must match those in self.sourcenames
+            CO2kg_per_BTU = {0:6.307e-05, 1:5.307e-05, 2:2.938e-04}  # "LPG", "NG", "Elec"
 
-            # must be a better way
             eTypes = [""] + self.etypes[:][:4]
             
-#            # true if bernoulli set for the burner slider
-#            bernoulli = [None]*5
-#            for i in range(0,5):
-#                try:
-#                    if self.load_etypes[i] != 0:
-#                        bernoulli[i] = aw.eventsliderBernoulli[self.load_etypes[i]-1]
-#                except:
-#                    bernoulli[i] = False
-
             # init the prev_loadtime to drop if it exists or to the end of profile time
             if self.timeindex[6] > 0:
                 prev_loadtime = [self.timex[self.timeindex[6]]]*4
@@ -11837,7 +11892,7 @@ class tgraphcanvas(FigureCanvas):
                         prev_loadtime[i] = loadtime
                         # scale the burner setting for 0-100%
                         val = (self.specialeventsvalue[j] - 1) * 10
-                        emin = toInt(self.loadevent_zeropcts[i])  #dave check these, they should already be int's
+                        emin = toInt(self.loadevent_zeropcts[i])
                         emax = toInt(self.loadevent_hundpcts[i])
                         scaled = (val - emin) / (emax - emin)  #emax > emin enforced by energy.py
                         load_pct = min(1,max(0,scaled)) * 100
@@ -11847,7 +11902,6 @@ class tgraphcanvas(FigureCanvas):
                         else:
                             factor = (load_pct / 100)
 
-#                        print("i, self.loadratings[i] * factor * (duration / 3600) * self.convertHeat(1,self.ratingunits[i],0)",i,self.loadratings[i],factor,(duration / 3600),self.convertHeat(1,self.ratingunits[i],0))  #dave
                         BTUs = self.loadratings[i] * factor * (duration / 3600) * self.convertHeat(1,self.ratingunits[i],0)
                         if BTUs > 0:
                             loadlabel = "{}-{}".format(formatLoadLabel(i), eTypes[self.load_etypes[i]])
@@ -11971,7 +12025,6 @@ class tgraphcanvas(FigureCanvas):
 
             btu_list.sort(key=lambda k : k["SortOrder"] )
 
-            #kind 0:Preheat Measured, 1:Preheat Pct, 2:BBP Measured, 3:BBP Pct, 4:Cooling Measured, 5:Cooling Pct, 6:Continuous, 7:Roast Event
             # summarize the batch metrics
             btu_batch = btu_preheat = btu_bbp = btu_cooling = btu_roast = 0
             co2_batch = co2_preheat = co2_bbp = co2_cooling = co2_roast = 0
@@ -12045,7 +12098,7 @@ class tgraphcanvas(FigureCanvas):
                 try:
                     # scale the burner setting for 0-100%
                     val = (self.specialeventsvalue[j] - 1) * 10
-                    emin = toInt(self.loadevent_zeropcts[i])  #dave check these, they should already be int's
+                    emin = toInt(self.loadevent_zeropcts[i])
                     emax = toInt(self.loadevent_hundpcts[i])
                     scaled = (val - emin) / (emax - emin)  #emax > emin enforced by energy.py
                     load_pct = min(1,max(0,scaled)) * 100
@@ -12061,7 +12114,6 @@ class tgraphcanvas(FigureCanvas):
                     _, _, exc_tb = sys.exc_info()
                     aw.qmc.adderror((QApplication.translate("Error Message","Exception:",None) + " measureFromprofile() {0}").format(str(ex)),exc_tb.tb_lineno)
                 finally:
-#                    print("{} {} Duration {}, energy {},  Val {}, LoadPct {}".format(i,j,duration, energy, val, load_pct))  #dave
                     return energy
 
             # if there is a DROP event use that for coolstart
@@ -12096,20 +12148,16 @@ class tgraphcanvas(FigureCanvas):
                             if loadtime >= coolstart and loadtime < prev_loadtime[i]:
                                 duration = prev_loadtime[i] - loadtime
                                 coolEnergy[i] += getEnergy(i,j,duration)
-#                                print("Call from Cool 1", i, j, coolEnergy[i], duration)  #dave
                             elif loadtime < coolstart and prev_loadtime[i] >= coolstart:
                                 duration = prev_loadtime[i] - coolstart
                                 coolEnergy[i] += getEnergy(i,j,duration)
-#                                print("Call from Cool 2", i, j, coolEnergy[i], duration)  #dave
                                 
                             if loadtime < heatend and prev_loadtime[i] >= heatend:
                                 duration = heatend - loadtime
                                 heatEnergy[i] += getEnergy(i,j,duration)
-#                                print("Call from Heat 1", i, j, coolEnergy[i], duration)  #dave
                             elif loadtime < heatend and prev_loadtime[i] < heatend:  
                                 duration = prev_loadtime[i] - loadtime
                                 heatEnergy[i] += getEnergy(i,j,duration)
-#                                print("Call from Heat 1", i, j, coolEnergy[i], duration)  #dave
                                 
                             prev_loadtime[i] = loadtime
 
@@ -15228,6 +15276,7 @@ class ApplicationWindow(QMainWindow):
     loadBackgroundSignal = pyqtSignal(str)
     clearBackgroundSignal = pyqtSignal()
     adjustSVSignal = pyqtSignal(int)
+    updateSerialLogSignal = pyqtSignal()
 
     def __init__(self, parent = None):
 
@@ -18102,6 +18151,7 @@ class ApplicationWindow(QMainWindow):
         self.loadBackgroundSignal.connect(self.loadbackgroundRedraw)
         self.clearBackgroundSignal.connect(self.clearbackgroundRedraw)
         self.adjustSVSignal.connect(self.adjustPIDsv)
+        self.updateSerialLogSignal.connect(self.updateSerialLog)
 
         if sys.platform.startswith("darwin"):
             # only on macOS we install the eventFilter to catch the signal on switching between light and dark modes
@@ -19306,45 +19356,44 @@ class ApplicationWindow(QMainWindow):
         aw.lcd7.setStyleSheet("QLCDNumber { border-radius: 4; color: %s; background-color: %s;}"%(aw.lcdpaletteF["sv"],aw.lcdpaletteB["sv"]))
         aw.updateExtraLCDvisibility()
 
-
     def updateCanvasColors(self):
-        canvas_color = aw.qmc.palette["canvas"]
+        canvas_color = self.qmc.palette["canvas"]
         if canvas_color is not None and canvas_color != "None" and not QColor.isValidColor(canvas_color):
             # we re-initalize broken canvas color
-            canvas_color = aw.qmc.palette["canvas"] = '#F8F8F8'
+            canvas_color = self.qmc.palette["canvas"] = '#F8F8F8'
         try:
             if str(canvas_color) == 'None' and sys.platform.startswith("darwin"):
                 if darkdetect.isDark() and appFrozen():
                     # in dark mode on macOS, the transparent canvas of the classic Artisan theme leeds to unreadable text, thus we switch to standard gray
-                    canvas_color = "#333333" # for light: "#F8F8F8"
-                    aw.qmc.palette["title"] = "#e6e6e6"
-                    aw.qmc.palette["xlabel"] = "#cccccc"
-                    aw.qmc.palette["ylabel"] = "#cccccc"
+                    canvas_color = self.qmc.palette["canvas"] = "#333333" # for light: "#F8F8F8"
+                    self.qmc.palette["title"] = "#e6e6e6"
+                    self.qmc.palette["xlabel"] = "#cccccc"
+                    self.qmc.palette["ylabel"] = "#cccccc"
                 else:
-                    if aw.qmc.palette["title"] == "#e6e6e6":
-                        aw.qmc.palette["title"] = "#000000"
-                    if aw.qmc.palette["xlabel"] == "#cccccc":
-                        aw.qmc.palette["xlabel"] = "#000000"
-                    if aw.qmc.palette["ylabel"] == "#cccccc":
-                        aw.qmc.palette["ylabel"] = "#000000"
-                for label in aw.qmc.ax.xaxis.get_ticklabels():
-                    label.set_color(aw.qmc.palette["xlabel"])
-                for label in aw.qmc.ax.yaxis.get_ticklabels():
-                    label.set_color(aw.qmc.palette["ylabel"])
-                if aw.qmc.delta_ax:
-                    for label in aw.qmc.delta_ax.yaxis.get_ticklabels():
-                        label.set_color(aw.qmc.palette["ylabel"])
-                    aw.qmc.delta_ax.yaxis.get_label().set_color(aw.qmc.palette["ylabel"])
-                aw.qmc.ax.xaxis.get_label().set_color(aw.qmc.palette["xlabel"])
-                aw.qmc.ax.yaxis.get_label().set_color(aw.qmc.palette["ylabel"])
+                    if self.qmc.palette["title"] == "#e6e6e6":
+                        self.qmc.palette["title"] = "#000000"
+                    if self.qmc.palette["xlabel"] == "#cccccc":
+                        self.qmc.palette["xlabel"] = "#000000"
+                    if self.qmc.palette["ylabel"] == "#cccccc":
+                        self.qmc.palette["ylabel"] = "#000000"
+                for label in self.qmc.ax.xaxis.get_ticklabels():
+                    label.set_color(self.qmc.palette["xlabel"])
+                for label in self.qmc.ax.yaxis.get_ticklabels():
+                    label.set_color(self.qmc.palette["ylabel"])
+                if self.qmc.delta_ax:
+                    for label in self.qmc.delta_ax.yaxis.get_ticklabels():
+                        label.set_color(self.qmc.palette["ylabel"])
+                    self.qmc.delta_ax.yaxis.get_label().set_color(self.qmc.palette["ylabel"])
+                self.qmc.ax.xaxis.get_label().set_color(self.qmc.palette["xlabel"])
+                self.qmc.ax.yaxis.get_label().set_color(self.qmc.palette["ylabel"])
         except: 
             pass
 
-        title_color = aw.qmc.palette["title"]
+        title_color = self.qmc.palette["title"]
 
         current_background_color = None
         try:
-            s = aw.styleSheet()[12+len("background-color:"):]
+            s = self.styleSheet()[12+len("background-color:"):]
             current_background_color = s[:s.index(";")]
         except:
             pass
@@ -19355,38 +19404,39 @@ class ApplicationWindow(QMainWindow):
             else:
                 whitep = False
         else:
-            whitep = aw.colorDifference("white",canvas_color) > aw.colorDifference("black",canvas_color)
+            whitep = self.colorDifference("white",canvas_color) > self.colorDifference("black",canvas_color)
 
-        aw.qmc.fig.patch.set_facecolor(str(canvas_color))
-        aw.setStyleSheet("QMainWindow{background-color:" + str(canvas_color) + ";"
+        self.qmc.fig.patch.set_facecolor(str(canvas_color))
+        self.setStyleSheet("QMainWindow{background-color:" + str(canvas_color) + ";"
                                    + "border: 0px solid black;"
                                    + "}" )
 
-        if current_background_color is None or current_background_color != str(canvas_color) or (whitep and aw.qmc.palette["messages"] != 'white'): # canvas color did not change, we do not need to redo the navigation bar
+        if current_background_color is None or current_background_color != str(canvas_color) or (whitep and self.qmc.palette["messages"] != 'white'): # canvas color did not change, we do not need to redo the navigation bar
             # update navigationbar
-            aw.level1layout.removeWidget(aw.ntb) # remove current bar
+            self.level1layout.removeWidget(self.ntb) # remove current bar
             
             if mpl_version[0] > 2 and mpl_version[1] > 2:
-                if aw.ntb.mode == MPL_Mode.PAN:
-                    aw.ntb.pan() # PAN is active, we deactivate it before changing the ToolBar
-                if aw.ntb.mode == MPL_Mode.ZOOM:
-                    aw.ntb.zoom() # ZOOM is active, we deactivate it before changing the ToolBar
+                if self.ntb.mode == MPL_Mode.PAN:
+                    self.ntb.pan() # PAN is active, we deactivate it before changing the ToolBar
+                if self.ntb.mode == MPL_Mode.ZOOM:
+                    self.ntb.zoom() # ZOOM is active, we deactivate it before changing the ToolBar
             else:
-                if aw.ntb._active == 'PAN':
-                    aw.ntb.pan() # PAN is active, we deactivate it before changing the ToolBar
-                if aw.ntb._active == 'ZOOM':
-                    aw.ntb.zoom() # ZOOM is active, we deactivate it before changing the ToolBar
-            aw.removeToolBar(aw.ntb)
-#            aw.ntb.hide() # seems not to be necessary anymore with the removeToolBar() above
-            aw.ntb.destroy()
-            aw.ntb = VMToolbar(aw.qmc, aw.main_widget, whitep)
+                if self.ntb._active == 'PAN':
+                    self.ntb.pan() # PAN is active, we deactivate it before changing the ToolBar
+                if self.ntb._active == 'ZOOM':
+                    self.ntb.zoom() # ZOOM is active, we deactivate it before changing the ToolBar
+            self.removeToolBar(self.ntb)
+#            self.ntb.hide() # seems not to be necessary anymore with the removeToolBar() above
+            self.ntb.destroy()
+            self.ntb = VMToolbar(self.qmc, self.main_widget, whitep)
 
         if whitep:
-            aw.qmc.palette["messages"] = 'white'
+            self.qmc.palette["messages"] = 'white'
         else:
-            aw.qmc.palette["messages"] = 'black'
-        aw.sendmessage("")
-        aw.ntb.setMinimumHeight(50)
+            self.qmc.palette["messages"] = 'black'
+        self.sendmessage("")
+        self.ntb.setMinimumHeight(50)
+
         aw.sliderFrame.setStyleSheet("QGroupBox {background-color:" + str(canvas_color) + ";"
                                     + "color: " + str(title_color) + ";"
                                     + "border: 0px solid gray;"
@@ -19401,27 +19451,27 @@ class ApplicationWindow(QMainWindow):
                                     + "subcontrol-position: top center;" #/* position at the top center */
                                     + "color: " + aw.qmc.palette["messages"] + ";"
                                     + "}")
-
+        
         # ensure x/y coordinates are readable
-        aw.ntb.locLabel.setStyleSheet("QWidget {background-color:" + str(canvas_color) + ";"
+        self.ntb.locLabel.setStyleSheet("QWidget {background-color:" + str(canvas_color) + ";"
                                     + "color: " + str(title_color) + ";"
                                     + "}" )
         # make QToolBar background transparent
-        aw.ntb.setStyleSheet("QToolBar {background-color:" + str(canvas_color) + ";"
+        self.ntb.setStyleSheet("QToolBar {background-color:" + str(canvas_color) + ";"
                                     + "border: 5px solid " + str(canvas_color) + ";"
                                     + "color: " + str(title_color) + ";"
                                     + "}" )
 
-        self.qmc.setProfileTitle(aw.qmc.title,updatebackground=True)
+        self.qmc.setProfileTitle(self.qmc.title,updatebackground=True)
 
-        aw.level1layout.insertWidget(0,aw.ntb)
+        self.level1layout.insertWidget(0,self.ntb)
 
         if str(canvas_color) == 'None':
-            aw.qmc.fig.canvas.setStyleSheet("background-color:transparent;")
-            aw.ntb.setStyleSheet("QToolBar {background-color:transparent;}")
+            self.qmc.fig.canvas.setStyleSheet("background-color:transparent;")
+            self.ntb.setStyleSheet("QToolBar {background-color:transparent;}")
 
-        aw.updateSliderColors()
-        aw.updatePhasesLCDsColors()
+        self.updateSliderColors()
+        self.updatePhasesLCDsColors()
 
         colorPairsToCheck = self.getcolorPairsToCheck()
         self.checkColors(colorPairsToCheck)
@@ -21216,6 +21266,11 @@ class ApplicationWindow(QMainWindow):
     def setLabelColor(self,label,color):
         label.setStyleSheet("QLabel { color: %s; }" % color.name())
 
+    @pyqtSlot()
+    def updateSerialLog(self):
+        if self.serial_dlg is not None:
+            self.serial_dlg.update()
+    
     #adds to serial log
     def addserial(self,serialstring):
         if aw.seriallogflag:
@@ -21227,6 +21282,9 @@ class ApplicationWindow(QMainWindow):
                 if len(self.seriallog) > 999:
                     self.seriallog = self.seriallog[1:]
                 self.seriallog.append(timez + " " + serialstring)
+                # if logging is not on, we have to update the serial log here:
+                if not self.qmc.flagon and self.serial_dlg is not None:
+                    self.updateSerialLogSignal.emit() # as addserial might be called from another (samplinig) thread we need to ensure that this is processed this within the GUI thread via a signal
             except Exception:
                 pass
             finally:
@@ -23151,6 +23209,24 @@ class ApplicationWindow(QMainWindow):
         self.slider4.setVisible(True)
         self.sliderSV.setVisible(True)
         self.setSliderFocusPolicy(Qt.StrongFocus)
+        # on "coarse" sliders we set the single step to 10, otherwise (default) to 1:
+        if self.eventslidercoarse[0]:
+            self.slider1.setSingleStep(10)
+        else:
+            self.slider1.setSingleStep(1)
+        if self.eventslidercoarse[1]:
+            self.slider2.setSingleStep(10)
+        else:
+            self.slider2.setSingleStep(1)
+        if self.eventslidercoarse[2]:
+            self.slider3.setSingleStep(10)
+        else:
+            self.slider3.setSingleStep(1)
+        if self.eventslidercoarse[3]:
+            self.slider4.setSingleStep(10)
+        else:
+            self.slider4.setSingleStep(1)
+        #
         aw.slidersAction.setChecked(True)
         if changeDefault:
             if aw.qmc.flagstart:
@@ -23488,8 +23564,8 @@ class ApplicationWindow(QMainWindow):
                 modifiers = event.modifiers()
                 #Note: Windows only - PyQt will sometimes, but not always, interpret a shortcut key as a menu key.  For that 
                 #    reason only CTRL and CTRL+SHIFT modifier should be used with shortcut keys f,e,r,c,t,v, and h.
-                control_modifier = modifiers == Qt.ControlModifier # command/apple key on macOS
-                alt_modifier = modifiers == Qt.AltModifier # OPTINO on macOS, ALT on Windows
+                control_modifier = modifiers == Qt.ControlModifier # command/apple key on macOS, CONTROL on Windows
+                alt_modifier = modifiers == Qt.AltModifier # OPTION on macOS, ALT on Windows
                 control_alt_modifier = modifiers == (Qt.ControlModifier | Qt.AltModifier)
                 control_shift_modifier = modifiers == (Qt.ControlModifier | Qt.ShiftModifier)
                 #meta_modifier = modifiers == Qt.MetaModifier # Control on macOS, Meta on Windows
@@ -23504,17 +23580,18 @@ class ApplicationWindow(QMainWindow):
                     self.setbuttonsfrom(numberkeys.index(key))
 
                 elif key == 72:                       #H
-                    if not aw.qmc.designerflag:
+                    if not self.qmc.designerflag:
                         if alt_modifier and platf != 'Windows' or ((control_shift_modifier or control_alt_modifier) and platf == 'Windows'): #control_alt_modifier here for backward compatibility only, see note above
                             self.deleteBackground()
-                            self.autoAdjustAxis()
+                            if not self.qmc.flagon:
+                                self.autoAdjustAxis()
                             self.qmc.redraw()
                         else:
-                            self.filename = aw.ArtisanOpenFileDialog(msg=QApplication.translate("Message","Load Background",None),ext_alt=".alog")
+                            self.filename = self.ArtisanOpenFileDialog(msg=QApplication.translate("Message","Load Background",None),ext_alt=".alog")
                             if len(self.filename) != 0:
                                 try:
-                                    aw.qmc.resetlinecountcaches()
-                                    aw.loadbackground(self.filename)
+                                    self.qmc.resetlinecountcaches()
+                                    self.loadbackground(self.filename)
                                 except:
                                     pass
                                 self.qmc.background = True
@@ -29370,9 +29447,6 @@ class ApplicationWindow(QMainWindow):
 #--------------------------------
         try:
 
-            if "canvas" in aw.qmc.palette:
-                aw.updateCanvasColors()
-
             aw.setFonts() # this one triggers a redraw by default to establish the correct fonts
             # only after this the correct aspect ratio of the qmc canvas is set
 
@@ -29428,6 +29502,10 @@ class ApplicationWindow(QMainWindow):
                     plus.controller.start(aw)
                 except:
                     pass
+            
+            # this one has done here, if it is done on start of the section the slider title colors are not set correctly on Linux and macOS
+            if "canvas" in aw.qmc.palette:
+                aw.updateCanvasColors()
 
         except Exception:
             res = False
@@ -35358,10 +35436,13 @@ class ApplicationWindow(QMainWindow):
                     filename += extension
                 #mpl.rcParams['pdf.fonttype'] = 3   # 3 or 42
                 #mpl.rc('pdf', fonttype=3)
-                aw.qmc.fig.savefig(filename,transparent=(aw.qmc.palette["canvas"] is None or aw.qmc.palette["canvas"]=='None'),
+                aw.qmc.fig.savefig(filename,
+                        transparent=(aw.qmc.palette["canvas"] is None or aw.qmc.palette["canvas"]=='None'),
                         #bbox_inches='tight',
                         #backend='pgf', # slow and fails on # characters in TeX backend
-                        facecolor=str(aw.qmc.palette["canvas"]),edgecolor=None) # transparent=True is need to get the delta curves and legend drawn
+                        facecolor=str(aw.qmc.palette["canvas"]),
+                        edgecolor=None
+                        ) # transparent=True is need to get the delta curves and legend drawn
                 aw.qmc.updateBackground() # that redraw is needed to avoid the "transparent flicker"
 
                 self.sendmessage(QApplication.translate("Message","{0} saved", None).format(str(filename)))
@@ -36745,8 +36826,6 @@ def main():
 
     app.setActivationWindow(aw,activateOnMessage=False) # set the activation window for the QtSingleApplication
 
-
-#    aw.setStyleSheet("QMainWindow {background: 'white';}")
 
     # only here deactivating the app napping seems to have an effect
     if sys.platform.startswith("darwin"):

@@ -25,6 +25,7 @@ import prettytable
 import plus.config  # @UnusedImport
 import plus.util
 import plus.stock
+import plus.controller
 
 from artisanlib.suppress_errors import suppress_stdout_stderr
 from artisanlib.util import deltaLabelUTF8, appFrozen, stringfromseconds,stringtoseconds, toInt, toFloat
@@ -672,6 +673,7 @@ class editGraphDlg(ArtisanResizeablDialog):
         self.org_specialeventsStrings = self.aw.qmc.specialeventsStrings[:]
         self.org_specialeventsvalue = self.aw.qmc.specialeventsvalue[:]
         self.org_timeindex = self.aw.qmc.timeindex[:]
+        self.org_phases = self.aw.qmc.phases[:]
         
         self.org_ambientTemp = self.aw.qmc.ambientTemp
         self.org_ambient_humidity = self.aw.qmc.ambient_humidity
@@ -692,10 +694,10 @@ class editGraphDlg(ArtisanResizeablDialog):
         chargelabel = QLabel("<b>" + QApplication.translate("Label", "CHARGE",None) + "</b>")
         chargelabel.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
         chargelabel.setStyleSheet("background-color:'#f07800';")
-        self.chargeedit = QLineEdit(stringfromseconds(0))
+        self.chargeeditcopy = stringfromseconds(0)
+        self.chargeedit = QLineEdit(self.chargeeditcopy)
 #        self.chargeedit.setFocusPolicy(Qt.NoFocus)
         self.chargeedit.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
-        self.chargeeditcopy = stringfromseconds(0)
         self.chargeedit.setValidator(QRegularExpressionValidator(regextime,self))
         self.chargeedit.setMaximumWidth(50)
         self.chargeedit.setMinimumWidth(50)
@@ -723,9 +725,9 @@ class editGraphDlg(ArtisanResizeablDialog):
             t2 = self.aw.qmc.timex[self.aw.qmc.timeindex[1]]-self.aw.qmc.timex[self.aw.qmc.timeindex[0]]
         else:
             t2 = 0
-        self.dryedit = QLineEdit(stringfromseconds(t2))
-        self.dryedit.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
         self.dryeditcopy = stringfromseconds(t2)
+        self.dryedit = QLineEdit(self.dryeditcopy)
+        self.dryedit.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
         self.dryedit.setValidator(QRegularExpressionValidator(regextime,self))
         self.dryedit.setMaximumWidth(50)
         self.dryedit.setMinimumWidth(50)
@@ -737,10 +739,10 @@ class editGraphDlg(ArtisanResizeablDialog):
             t3 = self.aw.qmc.timex[self.aw.qmc.timeindex[2]]-self.aw.qmc.timex[self.aw.qmc.timeindex[0]]
         else:
             t3 = 0
-        self.Cstartedit = QLineEdit(stringfromseconds(t3))
+        self.Cstarteditcopy = stringfromseconds(t3)
+        self.Cstartedit = QLineEdit(self.Cstarteditcopy)
 #        self.Cstartedit.setFocusPolicy(Qt.NoFocus)
         self.Cstartedit.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
-        self.Cstarteditcopy = stringfromseconds(t3)
         self.Cstartedit.setValidator(QRegularExpressionValidator(regextime,self))
         self.Cstartedit.setMaximumWidth(50)
         self.Cstartedit.setMinimumWidth(50)
@@ -753,10 +755,10 @@ class editGraphDlg(ArtisanResizeablDialog):
             t4 = self.aw.qmc.timex[self.aw.qmc.timeindex[3]]-self.aw.qmc.timex[self.aw.qmc.timeindex[0]]
         else:
             t4 = 0
-        self.Cendedit = QLineEdit(stringfromseconds(t4))
+        self.Cendeditcopy = stringfromseconds(t4)
+        self.Cendedit = QLineEdit(self.Cendeditcopy)
 #        self.Cendedit.setFocusPolicy(Qt.NoFocus)
         self.Cendedit.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
-        self.Cendeditcopy = stringfromseconds(t4)
         self.Cendedit.setValidator(QRegularExpressionValidator(regextime,self))
         self.Cendedit.setMaximumWidth(50)
         self.Cendedit.setMinimumWidth(50)
@@ -768,10 +770,10 @@ class editGraphDlg(ArtisanResizeablDialog):
             t5 = self.aw.qmc.timex[self.aw.qmc.timeindex[4]]-self.aw.qmc.timex[self.aw.qmc.timeindex[0]]
         else:
             t5 = 0
-        self.CCstartedit = QLineEdit(stringfromseconds(t5))
+        self.CCstarteditcopy = stringfromseconds(t5)
+        self.CCstartedit = QLineEdit(self.CCstarteditcopy)
 #        self.CCstartedit.setFocusPolicy(Qt.NoFocus)
         self.CCstartedit.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
-        self.CCstarteditcopy = stringfromseconds(t5)
         self.CCstartedit.setValidator(QRegularExpressionValidator(regextime,self))
         self.CCstartedit.setMaximumWidth(50)
         self.CCstartedit.setMinimumWidth(50)
@@ -783,10 +785,10 @@ class editGraphDlg(ArtisanResizeablDialog):
             t6 = self.aw.qmc.timex[self.aw.qmc.timeindex[5]]-self.aw.qmc.timex[self.aw.qmc.timeindex[0]]
         else:
             t6 = 0
-        self.CCendedit = QLineEdit(stringfromseconds(t6))
+        self.CCendeditcopy = stringfromseconds(t6)
+        self.CCendedit = QLineEdit(self.CCendeditcopy)
 #        self.CCendedit.setFocusPolicy(Qt.NoFocus)
         self.CCendedit.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
-        self.CCendeditcopy = stringfromseconds(t6)
         self.CCendedit.setValidator(QRegularExpressionValidator(regextime,self))
         self.CCendedit.setMaximumWidth(50)
         self.CCendedit.setMinimumWidth(50)
@@ -798,10 +800,10 @@ class editGraphDlg(ArtisanResizeablDialog):
             t7 = self.aw.qmc.timex[self.aw.qmc.timeindex[6]]-self.aw.qmc.timex[self.aw.qmc.timeindex[0]]
         else:
             t7 = 0
-        self.dropedit = QLineEdit(stringfromseconds(t7))
+        self.dropeditcopy = stringfromseconds(t7)
+        self.dropedit = QLineEdit(self.dropeditcopy)
 #        self.dropedit.setFocusPolicy(Qt.NoFocus)
         self.dropedit.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
-        self.dropeditcopy = stringfromseconds(t7)
         self.dropedit.setValidator(QRegularExpressionValidator(regextime,self))
         self.dropedit.setMaximumWidth(50)
         self.dropedit.setMinimumWidth(50)
@@ -814,10 +816,10 @@ class editGraphDlg(ArtisanResizeablDialog):
             t8 = self.aw.qmc.timex[self.aw.qmc.timeindex[7]]-self.aw.qmc.timex[self.aw.qmc.timeindex[0]]
         else:
             t8 = 0
-        self.cooledit = QLineEdit(stringfromseconds(t8))
+        self.cooleditcopy = stringfromseconds(t8)
+        self.cooledit = QLineEdit(self.cooleditcopy)
 #        self.cooledit.setFocusPolicy(Qt.NoFocus)
         self.cooledit.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
-        self.cooleditcopy = stringfromseconds(t8)
         self.cooledit.setValidator(QRegularExpressionValidator(regextime,self))
         self.cooledit.setMaximumWidth(50)
         self.cooledit.setMinimumWidth(50)
@@ -1650,8 +1652,12 @@ class editGraphDlg(ArtisanResizeablDialog):
 #PLUS
         try:
             if self.aw.plus_account is not None:
-                plus.stock.update()
-                QTimer.singleShot(1500,lambda : self.populatePlusCoffeeBlendCombos())
+                if plus.controller.is_connected():
+                    plus.stock.update()
+                else: # we are in ON mode, but not connected, we connect which triggers a stock update if successful
+                    plus.controller.connect(interactive=False)
+                if plus.controller.is_connected():
+                    QTimer.singleShot(1500,lambda : self.populatePlusCoffeeBlendCombos())
         except:
             pass
         if platform.system() == 'Windows':
@@ -2562,6 +2568,7 @@ class editGraphDlg(ArtisanResizeablDialog):
         self.aw.qmc.specialeventsStrings = self.org_specialeventsStrings
         self.aw.qmc.specialeventsvalue = self.org_specialeventsvalue
         self.aw.qmc.timeindex = self.org_timeindex
+        self.aw.qmc.phases = self.org_phases
         
         self.aw.qmc.ambientTemp = self.org_ambientTemp
         self.aw.qmc.ambient_humidity = self.org_ambient_humidity
@@ -2700,7 +2707,7 @@ class editGraphDlg(ArtisanResizeablDialog):
             self.energy_ui.datatable.horizontalHeaderItem(6).setText(QApplication.translate("Table","Kind",None))
             self.energy_ui.datatable.verticalHeader().setSectionResizeMode(2)
             # Loads tab
-            self.energy_ui.loadsSetDefaultsButton.setText(QApplication.translate("Button","Set as Defaults",None))
+            self.energy_ui.loadsSetDefaultsButton.setText(QApplication.translate("Button","Save Defaults",None))
             self.energy_ui.loadsDefaultsButtons.setText(QApplication.translate("Button","Restore Defaults",None))
             self.energy_ui.loadlabelsLabel.setText(QApplication.translate("Label","Label",None))
             self.energy_ui.loadratingsLabel.setText(QApplication.translate("Label","Rating",None))
@@ -2711,7 +2718,7 @@ class editGraphDlg(ArtisanResizeablDialog):
             self.energy_ui.electricEnergyMixLabel.setText(QApplication.translate("Label","Electric Energy Mix:",None))
             self.energy_ui.renewableLabel.setText(QApplication.translate("Label","Renewable",None))
             # Protocol tab
-            self.energy_ui.protocolSetDefaultsButton.setText(QApplication.translate("Button","Set as Defaults",None))
+            self.energy_ui.protocolSetDefaultsButton.setText(QApplication.translate("Button","Save Defaults",None))
             self.energy_ui.protocolDefaultsButton.setText(QApplication.translate("Button","Restore Defaults",None))
             self.energy_ui.preheatingLabel.setText(QApplication.translate("Label","Pre-Heating",None))
             self.energy_ui.betweenBatchesLabel.setText(QApplication.translate("Label","Between Batches",None))
@@ -2843,6 +2850,11 @@ class editGraphDlg(ArtisanResizeablDialog):
 
             #
             self.tabInitialized[4] = True
+        else:
+            # we update all data as main or custom events might have changed in the other tabs
+            self.saveMainEvents()
+            self.updateMetricsLabel()
+            self.createEnergyDataTable()
         # we always set the batch position on tab switch as it might have been changed in the first tab of the Roast Properties dialog
         self.energy_ui.roastbatchposLabel.setText("{} #{}".format(QApplication.translate("Label","Batch", None),self.aw.qmc.roastbatchpos))
 
@@ -3468,7 +3480,6 @@ class editGraphDlg(ArtisanResizeablDialog):
         res = ""
         try:
             r = self.scalefloat(toFloat(self.aw.comma2dot(str(s))))
-            #print("r, type(r)",r, type(r))  #dave
             if not r == '0':
                 res = str(r)
         except Exception:
@@ -3524,7 +3535,7 @@ class editGraphDlg(ArtisanResizeablDialog):
             db = QDialogButtonBox(QDialogButtonBox.RestoreDefaults)
             defaults_button_text_translated = db.button(QDialogButtonBox.RestoreDefaults).text()
             self.setup_ui.Defaults.setText(defaults_button_text_translated)
-            self.setup_ui.SetDefaults.setText(QApplication.translate("Button", "Set as Defaults",None))
+            self.setup_ui.SetDefaults.setText(QApplication.translate("Button", "Save Defaults",None))
             if self.aw.locale not in self.aw.qtbase_locales:
                 self.setup_ui.Defaults.setText(QApplication.translate("Button","Defaults", None))
             
@@ -3867,8 +3878,8 @@ class editGraphDlg(ArtisanResizeablDialog):
                     self.datatable.setItem(i,j,extra_qtw2)
                     j = j + 1
 
-    def createEventTable(self):
-        if not self.tabInitialized[2]:
+    def createEventTable(self, force=False):
+        if force or not self.tabInitialized[2]:
             try:
                 #### lock shared resources #####
                 self.aw.qmc.samplingsemaphore.acquire(1)
@@ -4068,7 +4079,7 @@ class editGraphDlg(ArtisanResizeablDialog):
         nevents = len(self.aw.qmc.specialevents)
         if nevents:
             self.aw.clusterEvents()
-            self.createEventTable()
+            self.createEventTable(force=True)
             self.aw.qmc.redraw(recomputeAllDeltas=False)
             self.aw.qmc.fileDirty()
             
@@ -4086,7 +4097,7 @@ class editGraphDlg(ArtisanResizeablDialog):
         finally:
             if self.aw.qmc.samplingsemaphore.available() < 1:
                 self.aw.qmc.samplingsemaphore.release(1)
-        self.createEventTable()
+        self.createEventTable(force=True)
         self.aw.qmc.redraw(recomputeAllDeltas=False)
         self.aw.qmc.fileDirty()
     
@@ -4123,7 +4134,7 @@ class editGraphDlg(ArtisanResizeablDialog):
         nevents = len(self.aw.qmc.specialevents)
         if nevents:
             self.aw.orderEvents()
-            self.createEventTable()
+            self.createEventTable(force=True)
             self.aw.qmc.redraw(recomputeAllDeltas=False)
 
     @pyqtSlot(bool)
@@ -4134,7 +4145,7 @@ class editGraphDlg(ArtisanResizeablDialog):
             self.aw.qmc.specialeventstype.append(0)
             self.aw.qmc.specialeventsStrings.append(str(len(self.aw.qmc.specialevents)))
             self.aw.qmc.specialeventsvalue.append(0)
-            self.createEventTable()
+            self.createEventTable(force=True)
             self.aw.qmc.redraw(recomputeAllDeltas=False)
             message = QApplication.translate("Message","Event #{0} added", None).format(str(len(self.aw.qmc.specialevents))) 
             self.aw.sendmessage(message)
@@ -4179,7 +4190,7 @@ class editGraphDlg(ArtisanResizeablDialog):
                 self.aw.qmc.specialeventsvalue.pop()
                 message = QApplication.translate("Message"," Event #{0} deleted", None).format(str(len(self.aw.qmc.specialevents)+1))
             self.aw.qmc.fileDirty()
-            self.createEventTable()
+            self.createEventTable(force=True)
             self.aw.qmc.redraw(recomputeAllDeltas=False)
             self.aw.sendmessage(message)
         else:
@@ -4456,96 +4467,105 @@ class editGraphDlg(ArtisanResizeablDialog):
             self.volumeoutedit.setText("%g" % self.aw.float2floatWeightVolume(volume_out))
             self.volume_percent()
     
+    def saveMainEvents(self):
+        if self.chargeedit.text() == "":
+            self.aw.qmc.timeindex[0] = -1
+            self.aw.qmc.xaxistosm(redraw=False)
+        elif self.chargeeditcopy != str(self.chargeedit.text()):
+            #if there is a CHARGE recorded and the time entered is positive. Use relative time
+            if stringtoseconds(str(self.chargeedit.text())) > 0 and self.aw.qmc.timeindex[0] != -1:
+                startindex = self.aw.qmc.time2index(self.aw.qmc.timex[self.aw.qmc.timeindex[0]] + stringtoseconds(str(self.chargeedit.text())))
+                self.aw.qmc.timeindex[0] = max(-1,startindex)
+            #if there is a CHARGE recorded and the time entered is negative. Use relative time
+            elif stringtoseconds(str(self.chargeedit.text())) < 0 and self.aw.qmc.timeindex[0] != -1:
+                relativetime = self.aw.qmc.timex[self.aw.qmc.timeindex[0]]-abs(stringtoseconds(str(self.chargeedit.text())))
+                startindex = self.aw.qmc.time2index(relativetime)
+                self.aw.qmc.timeindex[0] = max(-1,startindex)
+            #if there is _no_ CHARGE recorded and the time entered is positive. Use absolute time 
+            elif stringtoseconds(str(self.chargeedit.text())) > 0 and self.aw.qmc.timeindex[0] == -1:
+                startindex = self.aw.qmc.time2index(stringtoseconds(str(self.chargeedit.text())))
+                self.aw.qmc.timeindex[0] = max(-1,startindex)
+            #if there is _no_ CHARGE recorded and the time entered is negative. ERROR
+            elif stringtoseconds(str(self.chargeedit.text())) < 0 and self.aw.qmc.timeindex[0] == -1:
+                self.aw.qmc.adderror(QApplication.translate("Error Message", "Unable to move CHARGE to a value that does not exist",None))
+            self.chargeeditcopy = str(self.chargeedit.text())
+        # check CHARGE (with index self.aw.qmc.timeindex[0])
+        if self.aw.qmc.timeindex[0] == -1:
+            start = 0                   #relative start time
+        else:
+            start = self.aw.qmc.timex[self.aw.qmc.timeindex[0]]
+        if self.dryeditcopy != str(self.dryedit.text()):
+            s = stringtoseconds(str(self.dryedit.text()))
+            if s <= 0:
+                self.aw.qmc.timeindex[1] = 0
+            else:
+                dryindex = self.aw.qmc.time2index(start + s)
+                self.aw.qmc.timeindex[1] = max(0,dryindex)
+            self.dryeditcopy = str(self.dryedit.text())
+        if self.Cstarteditcopy != str(self.Cstartedit.text()):
+            s = stringtoseconds(str(self.Cstartedit.text()))
+            if s <= 0:
+                self.aw.qmc.timeindex[2] = 0
+            else:
+                fcsindex = self.aw.qmc.time2index(start + s)
+                self.aw.qmc.timeindex[2] = max(0,fcsindex)
+            self.Cstarteditcopy = str(self.Cstartedit.text())
+        if self.Cendeditcopy != str(self.Cendedit.text()):
+            s = stringtoseconds(str(self.Cendedit.text()))
+            if s <= 0:
+                self.aw.qmc.timeindex[3] = 0
+            else:
+                fceindex = self.aw.qmc.time2index(start + s)
+                self.aw.qmc.timeindex[3] = max(0,fceindex)
+            self.Cendeditcopy = str(self.Cendedit.text())
+        if self.CCstarteditcopy != str(self.CCstartedit.text()):
+            s = stringtoseconds(str(self.CCstartedit.text()))
+            if s <= 0:
+                self.aw.qmc.timeindex[4] = 0
+            else:
+                scsindex = self.aw.qmc.time2index(start + s)
+                self.aw.qmc.timeindex[4] = max(0,scsindex)
+            self.CCstarteditcopy = str(self.CCstartedit.text())
+        if self.CCendeditcopy != str(self.CCendedit.text()):
+            s = stringtoseconds(str(self.CCendedit.text()))
+            if s <= 0:
+                self.aw.qmc.timeindex[5] = 0
+            elif stringtoseconds(str(self.CCendedit.text())) > 0:
+                sceindex = self.aw.qmc.time2index(start + s)
+                self.aw.qmc.timeindex[5] = max(0,sceindex)
+            self.CCendeditcopy = str(self.CCendedit.text())
+        if self.dropeditcopy != str(self.dropedit.text()):
+            s = stringtoseconds(str(self.dropedit.text()))
+            if s <= 0:
+                self.aw.qmc.timeindex[6] = 0
+            else:
+                dropindex = self.aw.qmc.time2index(start + s)
+                self.aw.qmc.timeindex[6] = max(0,dropindex)
+            self.dropeditcopy = str(self.dropedit.text())
+        if self.cooleditcopy != str(self.cooledit.text()):
+            s = stringtoseconds(str(self.cooledit.text()))
+            if s <= 0:
+                self.aw.qmc.timeindex[7] = 0
+            else:
+                coolindex = self.aw.qmc.time2index(start + s)
+                self.aw.qmc.timeindex[7] = max(0,coolindex)
+            self.cooleditcopy = str(self.cooledit.text())
+        if self.aw.qmc.phasesbuttonflag:   
+            # adjust phases by DryEnd and FCs events
+            if self.aw.qmc.timeindex[1]:
+                self.aw.qmc.phases[1] = max(0,int(round(self.aw.qmc.temp2[self.aw.qmc.timeindex[1]])))
+            if self.aw.qmc.timeindex[2]:
+                self.aw.qmc.phases[2] = max(0,int(round(self.aw.qmc.temp2[self.aw.qmc.timeindex[2]])))
+    
     @pyqtSlot()
     def accept(self):
         #check for graph
         if len(self.aw.qmc.timex):
             #prevents accidentally deleting a modified profile.
             self.aw.qmc.fileDirty()
-            if self.chargeedit.text() == "":
-                self.aw.qmc.timeindex[0] = -1
-                self.aw.qmc.xaxistosm(redraw=False)
-            elif self.chargeeditcopy != str(self.chargeedit.text()):
-                #if there is a CHARGE recorded and the time entered is positive. Use relative time
-                if stringtoseconds(str(self.chargeedit.text())) > 0 and self.aw.qmc.timeindex[0] != -1:
-                    startindex = self.aw.qmc.time2index(self.aw.qmc.timex[self.aw.qmc.timeindex[0]] + stringtoseconds(str(self.chargeedit.text())))
-                    self.aw.qmc.timeindex[0] = max(-1,startindex)
-                    self.aw.qmc.xaxistosm(redraw=False)
-                #if there is a CHARGE recorded and the time entered is negative. Use relative time
-                elif stringtoseconds(str(self.chargeedit.text())) < 0 and self.aw.qmc.timeindex[0] != -1:
-                    relativetime = self.aw.qmc.timex[self.aw.qmc.timeindex[0]]-abs(stringtoseconds(str(self.chargeedit.text())))
-                    startindex = self.aw.qmc.time2index(relativetime)
-                    self.aw.qmc.timeindex[0] = max(-1,startindex)
-                    self.aw.qmc.xaxistosm(redraw=False)
-                #if there is _no_ CHARGE recorded and the time entered is positive. Use absolute time 
-                elif stringtoseconds(str(self.chargeedit.text())) > 0 and self.aw.qmc.timeindex[0] == -1:
-                    startindex = self.aw.qmc.time2index(stringtoseconds(str(self.chargeedit.text())))
-                    self.aw.qmc.timeindex[0] = max(-1,startindex)
-                    self.aw.qmc.xaxistosm(redraw=False)
-                #if there is _no_ CHARGE recorded and the time entered is negative. ERROR
-                elif stringtoseconds(str(self.chargeedit.text())) < 0 and self.aw.qmc.timeindex[0] == -1:
-                    self.aw.qmc.adderror(QApplication.translate("Error Message", "Unable to move CHARGE to a value that does not exist",None))
-                    return
-            # check CHARGE (with index self.aw.qmc.timeindex[0])
-            if self.aw.qmc.timeindex[0] == -1:
-                start = 0                   #relative start time
-            else:
-                start = self.aw.qmc.timex[self.aw.qmc.timeindex[0]]
-            if self.dryeditcopy != str(self.dryedit.text()):
-                s = stringtoseconds(str(self.dryedit.text()))
-                if s <= 0:
-                    self.aw.qmc.timeindex[1] = 0
-                else:
-                    dryindex = self.aw.qmc.time2index(start + s)
-                    self.aw.qmc.timeindex[1] = max(0,dryindex)
-            if self.Cstarteditcopy != str(self.Cstartedit.text()):
-                s = stringtoseconds(str(self.Cstartedit.text()))
-                if s <= 0:
-                    self.aw.qmc.timeindex[2] = 0
-                else:
-                    fcsindex = self.aw.qmc.time2index(start + s)
-                    self.aw.qmc.timeindex[2] = max(0,fcsindex)
-            if self.Cendeditcopy != str(self.Cendedit.text()):
-                s = stringtoseconds(str(self.Cendedit.text()))
-                if s <= 0:
-                    self.aw.qmc.timeindex[3] = 0
-                else:
-                    fceindex = self.aw.qmc.time2index(start + s)
-                    self.aw.qmc.timeindex[3] = max(0,fceindex)
-            if self.CCstarteditcopy != str(self.CCstartedit.text()):
-                s = stringtoseconds(str(self.CCstartedit.text()))
-                if s <= 0:
-                    self.aw.qmc.timeindex[4] = 0
-                else:
-                    scsindex = self.aw.qmc.time2index(start + s)
-                    self.aw.qmc.timeindex[4] = max(0,scsindex)
-            if self.CCendeditcopy != str(self.CCendedit.text()):
-                s = stringtoseconds(str(self.CCendedit.text()))
-                if s <= 0:
-                    self.aw.qmc.timeindex[5] = 0
-                elif stringtoseconds(str(self.CCendedit.text())) > 0:
-                    sceindex = self.aw.qmc.time2index(start + s)
-                    self.aw.qmc.timeindex[5] = max(0,sceindex)
-            if self.dropeditcopy != str(self.dropedit.text()):
-                s = stringtoseconds(str(self.dropedit.text()))
-                if s <= 0:
-                    self.aw.qmc.timeindex[6] = 0
-                else:
-                    dropindex = self.aw.qmc.time2index(start + s)
-                    self.aw.qmc.timeindex[6] = max(0,dropindex)
-            if self.cooleditcopy != str(self.cooledit.text()):
-                s = stringtoseconds(str(self.cooledit.text()))
-                if s <= 0:
-                    self.aw.qmc.timeindex[7] = 0
-                else:
-                    coolindex = self.aw.qmc.time2index(start + s)
-                    self.aw.qmc.timeindex[7] = max(0,coolindex)
-            if self.aw.qmc.phasesbuttonflag:   
-                # adjust phases by DryEnd and FCs events
-                if self.aw.qmc.timeindex[1]:
-                    self.aw.qmc.phases[1] = max(0,int(round(self.aw.qmc.temp2[self.aw.qmc.timeindex[1]])))
-                if self.aw.qmc.timeindex[2]:
-                    self.aw.qmc.phases[2] = max(0,int(round(self.aw.qmc.temp2[self.aw.qmc.timeindex[2]])))
+            self.saveMainEvents()
+            if self.aw.qmc.timeindex[0] != self.org_timeindex[0]:
+                self.aw.qmc.xaxistosm(redraw=False) # we update axis if CHARGE event changed
             
             self.saveEventTable()
         # Update Title
