@@ -1,7 +1,7 @@
 #!/bin/sh
 
 set -ex
-sudo apt-get update -y -q
+#sudo apt-get update -y -q
 sudo apt-get install -y -q ruby-dev build-essential p7zip-full rpm gdb libudev-dev qt5-default
 sudo apt-get install -y -q fakeroot
 
