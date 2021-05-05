@@ -1,6 +1,6 @@
 # Generic build number, later set to commit hash by init
 version: '{build}'
-
+ 
 # Do not build on tags (GitHub only)
 skip_tags: true
 clone_depth: 1
